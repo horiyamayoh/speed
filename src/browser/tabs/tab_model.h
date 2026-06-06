@@ -13,8 +13,11 @@ class TabModel final
 {
 public:
   [[nodiscard]] base::TabId CreateTab();
+  [[nodiscard]] bool SwitchToTab(base::TabId tab_id);
   [[nodiscard]] bool CloseTab(base::TabId tab_id);
+  void CloseAllTabs();
 
+  [[nodiscard]] bool ContainsTab(base::TabId tab_id) const;
   [[nodiscard]] std::size_t tab_count() const;
   [[nodiscard]] base::TabId active_tab() const;
 

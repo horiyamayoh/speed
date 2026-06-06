@@ -1,6 +1,7 @@
 #include "browser/tabs/tab_model.h"
 
 #include <algorithm>
+#include <iterator>
 
 namespace speed::browser
 {
@@ -13,20 +14,55 @@ base::TabId TabModel::CreateTab()
   return tab_id;
 }
 
+bool TabModel::SwitchToTab(base::TabId tab_id)
+{
+  if (!ContainsTab(tab_id))
+  {
+    return false;
+  }
+
+  active_tab_ = tab_id;
+  return true;
+}
+
 bool TabModel::CloseTab(base::TabId tab_id)
 {
-  const auto erased = std::erase(tabs_, tab_id);
-  if (erased == 0)
+  const auto tab = std::find(tabs_.begin(), tabs_.end(), tab_id);
+  if (tab == tabs_.end())
   {
     return false;
   }
 
   if (active_tab_ == tab_id)
   {
-    active_tab_ = tabs_.empty() ? base::TabId{} : tabs_.front();
+    const auto next_tab = std::next(tab);
+    if (next_tab != tabs_.end())
+    {
+      active_tab_ = *next_tab;
+    }
+    else if (tab != tabs_.begin())
+    {
+      active_tab_ = *std::prev(tab);
+    }
+    else
+    {
+      active_tab_ = {};
+    }
   }
 
+  tabs_.erase(tab);
   return true;
+}
+
+void TabModel::CloseAllTabs()
+{
+  tabs_.clear();
+  active_tab_ = {};
+}
+
+bool TabModel::ContainsTab(base::TabId tab_id) const
+{
+  return std::find(tabs_.begin(), tabs_.end(), tab_id) != tabs_.end();
 }
 
 std::size_t TabModel::tab_count() const
