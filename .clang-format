@@ -1,0 +1,74 @@
+---
+Language: Cpp
+BasedOnStyle: LLVM
+Standard: Latest
+
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+ColumnLimit: 100
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterExternBlock: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
+  IndentBraces: false
+  SplitEmptyFunction: false
+  SplitEmptyNamespace: false
+  SplitEmptyRecord: false
+
+AllowShortBlocksOnASingleLine: Never
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortEnumsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Inline
+AllowShortLoopsOnASingleLine: false
+
+AlignAfterOpenBracket: Align
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignOperands: Align
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+BinPackArguments: false
+BinPackParameters: false
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: Never
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
+
+Cpp11BracedListStyle: true
+NamespaceIndentation: None
+FixNamespaceComments: true
+
+DerivePointerAlignment: false
+PointerAlignment: Left
+ReferenceAlignment: Left
+QualifierAlignment: Leave
+
+IncludeBlocks: Regroup
+SortIncludes: CaseSensitive
+IncludeCategories:
+  - Regex: '^".*"$'
+    Priority: 1
+  - Regex: "^<.*>$"
+    Priority: 2
+
+SpaceBeforeParens: ControlStatements
+SpacesInAngles: Never
+SpacesInContainerLiterals: false
+SpaceInEmptyParentheses: false

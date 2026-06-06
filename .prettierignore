@@ -1,0 +1,17 @@
+build/
+build-*/
+out/
+node_modules/
+.git/
+.cache/
+.cmake/
+
+third_party/
+src/ipc/generated/
+
+*.a
+*.o
+*.so
+*.dylib
+*.dll
+*.exe

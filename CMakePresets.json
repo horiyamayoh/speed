@@ -1,0 +1,45 @@
+{
+  "version": 6,
+  "configurePresets": [
+    {
+      "name": "dev",
+      "displayName": "Developer Debug",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SPEED_ENABLE_STRICT_WARNINGS": "ON",
+        "SPEED_ENABLE_TESTS": "ON",
+        "SPEED_WARNINGS_AS_ERRORS": "ON"
+      }
+    },
+    {
+      "name": "tidy",
+      "displayName": "Developer Debug with clang-tidy",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-tidy",
+      "cacheVariables": {
+        "SPEED_ENABLE_CLANG_TIDY": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev"
+    },
+    {
+      "name": "tidy",
+      "configurePreset": "tidy"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

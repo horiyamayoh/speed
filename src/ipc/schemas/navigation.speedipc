@@ -1,0 +1,33 @@
+# Speed IPC schema: navigation v0
+
+schema speed.navigation.v0
+version 1
+
+message NavigateRequest {
+  sender: Browser
+  receiver: Network
+  fields:
+    request_id: u64
+    tab_id: u64
+    url: string
+}
+
+message NavigateResponse {
+  sender: Network
+  receiver: Browser
+  fields:
+    request_id: u64
+    status: enum(allowed, blocked, failed)
+    aegis_reason: string
+    body_ref: string
+}
+
+message CommitDocument {
+  sender: Browser
+  receiver: Renderer
+  fields:
+    tab_id: u64
+    document_id: u64
+    body_ref: string
+}
+

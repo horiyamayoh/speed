@@ -1,0 +1,20 @@
+{
+  "name": "speed-browser",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Development tooling for the Speed browser repository.",
+  "scripts": {
+    "format": "tools/format/format.sh",
+    "format:check": "tools/format/check-format.sh && prettier --check .",
+    "format:cpp": "tools/format/format-cpp.sh",
+    "format:prettier": "prettier --write .",
+    "lint": "tools/lint/lint.sh",
+    "lint:cpp": "tools/format/check-format.sh",
+    "lint:format": "tools/format/check-format.sh",
+    "lint:tidy": "tools/lint/run-clang-tidy.sh",
+    "test": "cmake --build build && ctest --test-dir build --output-on-failure"
+  },
+  "devDependencies": {
+    "prettier": "3.8.3"
+  }
+}

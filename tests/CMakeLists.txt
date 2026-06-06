@@ -1,0 +1,19 @@
+function(speed_add_test target_name)
+  add_executable(${target_name} ${ARGN})
+  speed_configure_target(${target_name})
+  add_test(NAME ${target_name} COMMAND ${target_name})
+endfunction()
+
+speed_add_test(speed_base_ids_test unit/base_ids_test.cpp)
+target_link_libraries(speed_base_ids_test PRIVATE speed_base)
+
+speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
+target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)
+
+speed_add_test(speed_ipc_schema_test ipc/schema_registry_test.cpp)
+target_link_libraries(speed_ipc_schema_test PRIVATE speed_ipc)
+target_compile_definitions(speed_ipc_schema_test PRIVATE SPEED_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+
+speed_add_test(speed_network_aegis_hook_test integration/network_aegis_hook_test.cpp)
+target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
+
