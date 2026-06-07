@@ -207,11 +207,14 @@ Completed post-skeleton progress:
 12. POSIX child process launch foundation added under `platform/process` with move-only child
     ownership, timed waits, termination, and executable smoke coverage for Browser, Renderer,
     Network, and Utility entrypoints.
+13. Framed binary IPC transport foundation added under `ipc/runtime` with schema-owned navigation
+    message codecs, local socketpair transport, round-trip coverage, and malformed frame/payload
+    rejection tests.
 
 Recommended next milestone sequence:
 
-1. Add framed IPC transport, process IPC servers, supervision, and flag-gated real-process app
-   wiring while preserving the existing schema-first contracts.
+1. Add process IPC servers, supervision, and flag-gated real-process app wiring while preserving the
+   existing schema-first contracts.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

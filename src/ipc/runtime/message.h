@@ -22,6 +22,7 @@ struct MessageHeader final
   ProcessRole receiver{ProcessRole::kBrowser};
   std::string schema_name;
   std::uint32_t schema_version{0};
+  std::string message_name;
 };
 
 class Message final

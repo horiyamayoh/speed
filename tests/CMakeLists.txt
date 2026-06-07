@@ -47,6 +47,9 @@ speed_add_test(speed_ipc_schema_test ipc/schema_registry_test.cpp)
 target_link_libraries(speed_ipc_schema_test PRIVATE speed_ipc)
 target_compile_definitions(speed_ipc_schema_test PRIVATE SPEED_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
 
+speed_add_test(speed_ipc_framed_transport_test ipc/framed_transport_test.cpp)
+target_link_libraries(speed_ipc_framed_transport_test PRIVATE speed_ipc)
+
 speed_add_test(speed_network_aegis_hook_test integration/network_aegis_hook_test.cpp)
 target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
 

@@ -1,4 +1,5 @@
 #include "ipc/runtime/message.h"
+#include "ipc/runtime/navigation_codec.h"
 #include "ipc/runtime/navigation_messages.h"
 
 #include <cassert>
@@ -14,6 +15,10 @@ int main()
   assert(std::filesystem::exists(schema_path));
   assert(speed::ipc::navigation::kSchemaName == "speed.navigation.v0");
   assert(speed::ipc::navigation::kSchemaVersion == 1);
+  assert(speed::ipc::navigation::kNavigateRequestMessageName == "NavigateRequest");
+  assert(speed::ipc::navigation::kNavigateResponseMessageName == "NavigateResponse");
+  assert(speed::ipc::navigation::kCommitDocumentMessageName == "CommitDocument");
+  assert(speed::ipc::navigation::kCommitErrorPageMessageName == "CommitErrorPage");
   assert(speed::ipc::navigation::IsValidNavigateRequest({
       .request_id = speed::base::RequestId::FromRaw(1),
       .tab_id = speed::base::TabId::FromRaw(2),

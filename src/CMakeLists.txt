@@ -25,8 +25,14 @@ function(speed_assert_target_not_linking target_name)
 endfunction()
 
 add_library(speed_ipc
+  ipc/runtime/codec.cpp
+  ipc/runtime/codec.h
+  ipc/runtime/framed_transport.cpp
+  ipc/runtime/framed_transport.h
   ipc/runtime/message.cpp
   ipc/runtime/message.h
+  ipc/runtime/navigation_codec.cpp
+  ipc/runtime/navigation_codec.h
   ipc/runtime/navigation_messages.cpp
   ipc/runtime/navigation_messages.h
 )
