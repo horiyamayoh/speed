@@ -3,7 +3,9 @@
 #include "aegis/classifier/request_classifier.h"
 #include "base/ids/id_types.h"
 #include "ipc/runtime/navigation_messages.h"
+#include "network/fetch/fetch_adapter.h"
 
+#include <memory>
 #include <string>
 
 namespace speed::network
@@ -25,6 +27,12 @@ class NetworkService final
 {
 public:
   explicit NetworkService(aegis::RequestClassifier classifier = {});
+  NetworkService(aegis::RequestClassifier classifier, std::unique_ptr<FetchAdapter> fetch_adapter);
+  NetworkService(const NetworkService&) = delete;
+  NetworkService& operator=(const NetworkService&) = delete;
+  NetworkService(NetworkService&&) noexcept;
+  NetworkService& operator=(NetworkService&&) noexcept;
+  ~NetworkService();
 
   [[nodiscard]] NetworkResult PrepareRequest(const NetworkRequest& request) const;
   [[nodiscard]] ipc::navigation::NavigateResponse
@@ -32,6 +40,7 @@ public:
 
 private:
   aegis::RequestClassifier classifier_;
+  std::unique_ptr<FetchAdapter> fetch_adapter_;
 };
 
 } // namespace speed::network

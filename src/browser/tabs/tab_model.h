@@ -18,6 +18,7 @@ enum class TabNavigationState : std::uint8_t
   kCommitted,
   kBlocked,
   kFailed,
+  kCrashed,
 };
 
 struct TabState final
@@ -54,6 +55,7 @@ public:
   BlockNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason);
   [[nodiscard]] base::Status
   FailNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason);
+  [[nodiscard]] base::Status MarkCrashed(base::TabId tab_id, std::string reason);
 
 private:
   [[nodiscard]] std::vector<TabState>::iterator FindTab(base::TabId tab_id);

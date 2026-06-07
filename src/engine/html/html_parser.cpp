@@ -295,11 +295,11 @@ void SkipComment(std::string_view input, std::size_t& position)
 
 [[nodiscard]] bool IsSupportedTag(std::string_view tag_name)
 {
-  return tag_name == "html" || tag_name == "head" || tag_name == "body" || tag_name == "div" ||
-         tag_name == "span" || tag_name == "p" || tag_name == "a" || tag_name == "img" ||
-         tag_name == "h1" || tag_name == "h2" || tag_name == "h3" || tag_name == "h4" ||
-         tag_name == "h5" || tag_name == "h6" || tag_name == "ul" || tag_name == "ol" ||
-         tag_name == "li" || tag_name == "br";
+  return tag_name == "html" || tag_name == "head" || tag_name == "body" || tag_name == "style" ||
+         tag_name == "div" || tag_name == "span" || tag_name == "p" || tag_name == "a" ||
+         tag_name == "img" || tag_name == "h1" || tag_name == "h2" || tag_name == "h3" ||
+         tag_name == "h4" || tag_name == "h5" || tag_name == "h6" || tag_name == "ul" ||
+         tag_name == "ol" || tag_name == "li" || tag_name == "br";
 }
 
 [[nodiscard]] bool IsVoidTag(std::string_view tag_name)

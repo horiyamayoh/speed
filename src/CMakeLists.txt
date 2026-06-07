@@ -51,6 +51,8 @@ target_link_libraries(speed_aegis PUBLIC speed_base)
 target_include_directories(speed_aegis PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_aegis)
 
+find_package(OpenSSL REQUIRED)
+
 add_library(speed_storage
   storage/history/history_store.cpp
   storage/history/history_store.h
@@ -62,9 +64,19 @@ target_include_directories(speed_storage PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_storage)
 
 add_library(speed_engine
+  engine/css/css_parser.cpp
+  engine/css/css_parser.h
   engine/dom/node.h
   engine/html/html_parser.cpp
   engine/html/html_parser.h
+  engine/layout/layout_engine.cpp
+  engine/layout/layout_engine.h
+  engine/paint/display_list.cpp
+  engine/paint/display_list.h
+  engine/render_pipeline.cpp
+  engine/render_pipeline.h
+  engine/style/style_resolver.cpp
+  engine/style/style_resolver.h
 )
 target_link_libraries(speed_engine PUBLIC speed_base)
 target_include_directories(speed_engine PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -79,12 +91,14 @@ target_include_directories(speed_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_ui)
 
 add_library(speed_network
+  network/fetch/fetch_adapter.h
   network/fetch/network_service.cpp
   network/fetch/network_service.h
   network/network_process.cpp
   network/network_process.h
 )
 target_link_libraries(speed_network PUBLIC speed_aegis speed_base speed_ipc)
+target_link_libraries(speed_network PRIVATE OpenSSL::SSL)
 target_include_directories(speed_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_network)
 
@@ -105,7 +119,7 @@ add_library(speed_browser
   browser/tabs/tab_model.cpp
   browser/tabs/tab_model.h
 )
-target_link_libraries(speed_browser PUBLIC speed_base speed_ipc speed_platform speed_storage speed_ui)
+target_link_libraries(speed_browser PUBLIC speed_base speed_ipc speed_platform speed_storage)
 target_include_directories(speed_browser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_browser)
 speed_assert_target_not_linking(speed_browser speed_network speed_renderer)

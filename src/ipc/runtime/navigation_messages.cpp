@@ -18,11 +18,11 @@ bool IsValidNavigateResponse(const NavigateResponse& response)
   switch (response.status)
   {
   case NavigateStatus::kAllowed:
-    return response.error_message.empty() && !response.body_ref.empty();
+    return response.error_message.empty() && !response.document_body.empty();
   case NavigateStatus::kBlocked:
-    return !response.aegis_reason.empty() && response.body_ref.empty();
+    return !response.aegis_reason.empty() && response.document_body.empty();
   case NavigateStatus::kFailed:
-    return !response.error_message.empty() && response.body_ref.empty();
+    return !response.error_message.empty() && response.document_body.empty();
   }
 
   return false;
@@ -30,7 +30,13 @@ bool IsValidNavigateResponse(const NavigateResponse& response)
 
 bool IsValidCommitDocument(const CommitDocument& commit)
 {
-  return commit.tab_id && commit.document_id && !commit.url.empty() && !commit.body_ref.empty();
+  return commit.tab_id && commit.document_id && !commit.url.empty() &&
+         !commit.document_body.empty();
+}
+
+bool IsValidCommitErrorPage(const CommitErrorPage& commit)
+{
+  return commit.tab_id && commit.document_id && !commit.url.empty() && !commit.message.empty();
 }
 
 std::string_view NavigateStatusName(NavigateStatus status)
@@ -43,6 +49,21 @@ std::string_view NavigateStatusName(NavigateStatus status)
     return "blocked";
   case NavigateStatus::kFailed:
     return "failed";
+  }
+
+  return "unknown";
+}
+
+std::string_view ErrorPageReasonName(ErrorPageReason reason)
+{
+  switch (reason)
+  {
+  case ErrorPageReason::kBlocked:
+    return "blocked";
+  case ErrorPageReason::kFailed:
+    return "failed";
+  case ErrorPageReason::kCrashed:
+    return "crashed";
   }
 
   return "unknown";

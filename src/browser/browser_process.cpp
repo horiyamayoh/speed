@@ -1,7 +1,6 @@
 #include "browser/browser_process.h"
 
 #include "base/logging/logging.h"
-#include "ui/shell/browser_shell.h"
 
 #include <optional>
 #include <string>
@@ -19,9 +18,11 @@ constexpr std::string_view kInitialUrl = "about:blank";
 } // namespace
 
 BrowserProcess::BrowserProcess(NavigationNetworkClient& network_client,
-                               NavigationRendererClient& renderer_client)
+                               NavigationRendererClient& renderer_client,
+                               storage::HistoryStore history_store)
     : network_client_(network_client),
-      renderer_client_(renderer_client)
+      renderer_client_(renderer_client),
+      history_(std::move(history_store))
 {}
 
 base::Status BrowserProcess::Start()
@@ -48,9 +49,6 @@ base::Status BrowserProcess::Start()
     return navigation_status;
   }
 
-  const ui::BrowserShell shell;
-  shell.Show();
-
   base::Log(base::LogLevel::kInfo, "browser", "browser process ready");
   return base::Status::Ok();
 }
@@ -60,6 +58,15 @@ base::Status BrowserProcess::Shutdown()
   if (state_ != State::kRunning)
   {
     return base::Status::Error("browser process is not running");
+  }
+
+  if (history_.durable())
+  {
+    const base::Status history_status = history_.Flush();
+    if (!history_status.ok())
+    {
+      return history_status;
+    }
   }
 
   tabs_.CloseAllTabs();
@@ -76,6 +83,16 @@ base::TabId BrowserProcess::CreateTab()
   }
 
   return tabs_.CreateTab();
+}
+
+bool BrowserProcess::CloseTab(base::TabId tab_id)
+{
+  if (state_ != State::kRunning)
+  {
+    return false;
+  }
+
+  return tabs_.CloseTab(tab_id);
 }
 
 bool BrowserProcess::SwitchToTab(base::TabId tab_id)
@@ -135,6 +152,22 @@ base::Status BrowserProcess::NavigateTab(base::TabId tab_id, std::string_view in
   return HandleNavigateResponse(*request, response);
 }
 
+base::Status BrowserProcess::HandleRendererCrash(base::TabId tab_id, std::string_view reason)
+{
+  if (state_ != State::kRunning)
+  {
+    return base::Status::Error("browser process is not running");
+  }
+
+  if (!tabs_.ContainsTab(tab_id))
+  {
+    return base::Status::Error("tab does not exist");
+  }
+
+  const std::string message = reason.empty() ? "renderer crashed" : std::string(reason);
+  return tabs_.MarkCrashed(tab_id, message);
+}
+
 BrowserProcess::State BrowserProcess::state() const
 {
   return state_;
@@ -181,7 +214,7 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
         .tab_id = request.tab_id,
         .document_id = document_id,
         .url = request.url,
-        .body_ref = response.body_ref,
+        .document_body = response.document_body,
     };
 
     base::Status status = renderer_client_.SendCommitDocument(commit);
@@ -198,12 +231,31 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
       return status;
     }
 
-    return history_.RecordVisit(request.url);
+    status = history_.RecordVisit(request.url);
+    if (!status.ok())
+    {
+      return status;
+    }
+
+    if (history_.durable())
+    {
+      return history_.Flush();
+    }
+
+    return base::Status::Ok();
   }
   case ipc::navigation::NavigateStatus::kBlocked:
   {
     const std::string reason =
         response.aegis_reason.empty() ? "navigation blocked" : response.aegis_reason;
+    const base::Status error_page_status = CommitErrorPage(
+        request.tab_id, request.url, ipc::navigation::ErrorPageReason::kBlocked, reason);
+    if (!error_page_status.ok())
+    {
+      (void)tabs_.FailNavigation(request.tab_id, request.request_id, error_page_status.message());
+      return error_page_status;
+    }
+
     const base::Status status = tabs_.BlockNavigation(request.tab_id, request.request_id, reason);
     if (!status.ok())
     {
@@ -216,6 +268,14 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
   {
     const std::string reason =
         response.error_message.empty() ? "navigation failed" : response.error_message;
+    const base::Status error_page_status = CommitErrorPage(
+        request.tab_id, request.url, ipc::navigation::ErrorPageReason::kFailed, reason);
+    if (!error_page_status.ok())
+    {
+      (void)tabs_.FailNavigation(request.tab_id, request.request_id, error_page_status.message());
+      return error_page_status;
+    }
+
     const base::Status status = tabs_.FailNavigation(request.tab_id, request.request_id, reason);
     if (!status.ok())
     {
@@ -228,6 +288,22 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
 
   (void)tabs_.FailNavigation(request.tab_id, request.request_id, "unknown navigation response");
   return base::Status::Error("unknown navigation response");
+}
+
+base::Status BrowserProcess::CommitErrorPage(base::TabId tab_id,
+                                             std::string_view url,
+                                             ipc::navigation::ErrorPageReason reason,
+                                             std::string_view message)
+{
+  const ipc::navigation::CommitErrorPage commit = {
+      .tab_id = tab_id,
+      .document_id = base::DocumentId::FromRaw(next_document_id_++),
+      .url = std::string(url),
+      .reason = reason,
+      .message = std::string(message),
+  };
+
+  return renderer_client_.SendCommitErrorPage(commit);
 }
 
 } // namespace speed::browser

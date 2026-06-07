@@ -21,7 +21,7 @@ message NavigateResponse {
     status: enum(allowed, blocked, failed)
     aegis_reason: string
     error_message: string
-    body_ref: string
+    document_body: string
 }
 
 message CommitDocument {
@@ -31,5 +31,16 @@ message CommitDocument {
     tab_id: u64
     document_id: u64
     url: string
-    body_ref: string
+    document_body: string
+}
+
+message CommitErrorPage {
+  sender: Browser
+  receiver: Renderer
+  fields:
+    tab_id: u64
+    document_id: u64
+    url: string
+    reason: enum(blocked, failed, crashed)
+    message: string
 }

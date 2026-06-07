@@ -1,5 +1,5 @@
 add_executable(speed-browser speed_browser_main.cpp)
-target_link_libraries(speed-browser PRIVATE speed_browser speed_network speed_renderer)
+target_link_libraries(speed-browser PRIVATE speed_browser speed_network speed_renderer speed_ui)
 speed_configure_target(speed-browser)
 
 add_executable(speed-renderer speed_renderer_main.cpp)

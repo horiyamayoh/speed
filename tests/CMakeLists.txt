@@ -19,8 +19,23 @@ target_link_libraries(speed_browser_process_test PRIVATE speed_browser)
 speed_add_test(speed_renderer_process_test unit/renderer_process_test.cpp)
 target_link_libraries(speed_renderer_process_test PRIVATE speed_renderer)
 
+speed_add_test(speed_history_store_test unit/history_store_test.cpp)
+target_link_libraries(speed_history_store_test PRIVATE speed_storage)
+
 speed_add_test(speed_html_parser_test html/html_parser_test.cpp)
 target_link_libraries(speed_html_parser_test PRIVATE speed_engine)
+
+speed_add_test(speed_css_parser_test css/css_parser_test.cpp)
+target_link_libraries(speed_css_parser_test PRIVATE speed_engine)
+
+speed_add_test(speed_style_resolver_test css/style_resolver_test.cpp)
+target_link_libraries(speed_style_resolver_test PRIVATE speed_engine)
+
+speed_add_test(speed_block_layout_test layout/block_layout_test.cpp)
+target_link_libraries(speed_block_layout_test PRIVATE speed_engine)
+
+speed_add_test(speed_display_list_test paint/display_list_test.cpp)
+target_link_libraries(speed_display_list_test PRIVATE speed_engine)
 
 speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
 target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)

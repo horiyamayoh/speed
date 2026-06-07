@@ -38,6 +38,12 @@ int main()
   assert(second_state->current_url.empty());
   assert(second_state->last_error == "blocked by unit test");
 
+  assert(tabs.MarkCrashed(first, "renderer exited").ok());
+  first_state = tabs.GetTabState(first);
+  assert(first_state != nullptr);
+  assert(first_state->navigation_state == speed::browser::TabNavigationState::kCrashed);
+  assert(first_state->last_error == "renderer exited");
+
   assert(tabs.tab_count() == 3);
   assert(first.value() == 1);
   assert(second.value() == 2);

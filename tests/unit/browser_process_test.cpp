@@ -19,7 +19,7 @@ public:
         .status = speed::ipc::navigation::NavigateStatus::kAllowed,
         .aegis_reason = "unit test allow",
         .error_message = {},
-        .body_ref = "stub-document:" + request.url,
+        .document_body = "<html><body><p>" + request.url + "</p></body></html>",
     };
   }
 
@@ -36,7 +36,15 @@ public:
     return speed::base::Status::Ok();
   }
 
+  speed::base::Status
+  SendCommitErrorPage(const speed::ipc::navigation::CommitErrorPage& commit) override
+  {
+    error_commits.push_back(commit);
+    return speed::base::Status::Ok();
+  }
+
   std::vector<speed::ipc::navigation::CommitDocument> commits;
+  std::vector<speed::ipc::navigation::CommitErrorPage> error_commits;
 };
 
 } // namespace
@@ -63,6 +71,7 @@ int main()
   assert(network.requests.size() == 1);
   assert(network.requests.front().is_top_level);
   assert(renderer.commits.size() == 1);
+  assert(renderer.error_commits.empty());
   assert(renderer.commits.front().url == "about:blank");
   const speed::browser::TabState* initial_tab =
       process.tabs().GetTabState(process.tabs().active_tab());
@@ -80,6 +89,7 @@ int main()
   assert(network.requests.size() == 2);
   assert(network.requests.back().url == "https://example.test/page");
   assert(renderer.commits.size() == 2);
+  assert(renderer.error_commits.empty());
   assert(renderer.commits.back().url == "https://example.test/page");
   assert(initial_tab->navigation_state == speed::browser::TabNavigationState::kCommitted);
   assert(initial_tab->current_url == "https://example.test/page");
@@ -92,7 +102,13 @@ int main()
   assert(process.history().entry_count() == 2);
   assert(network.requests.size() == 2);
   assert(renderer.commits.size() == 2);
+  assert(renderer.error_commits.empty());
   assert(initial_tab->navigation_state == speed::browser::TabNavigationState::kCommitted);
+
+  status = process.HandleRendererCrash(process.tabs().active_tab(), "simulated crash");
+  assert(status.ok());
+  assert(initial_tab->navigation_state == speed::browser::TabNavigationState::kCrashed);
+  assert(initial_tab->last_error == "simulated crash");
 
   status = process.Shutdown();
   assert(status.ok());

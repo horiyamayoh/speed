@@ -193,6 +193,21 @@ TabModel::FailNavigation(base::TabId tab_id, base::RequestId request_id, std::st
   return base::Status::Ok();
 }
 
+base::Status TabModel::MarkCrashed(base::TabId tab_id, std::string reason)
+{
+  const auto tab = FindTab(tab_id);
+  if (tab == tabs_.end())
+  {
+    return base::Status::Error("tab does not exist");
+  }
+
+  tab->navigation_state = TabNavigationState::kCrashed;
+  tab->pending_request_id = {};
+  tab->pending_url.clear();
+  tab->last_error = reason.empty() ? "renderer crashed" : std::move(reason);
+  return base::Status::Ok();
+}
+
 std::vector<TabState>::iterator TabModel::FindTab(base::TabId tab_id)
 {
   return std::ranges::find(tabs_, tab_id, &TabState::id);

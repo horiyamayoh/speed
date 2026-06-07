@@ -1,8 +1,9 @@
 # Speed Project State
 
-Version: v0.1 implementation skeleton  
+Version: v0.1 MVP static browsing path
 Last updated: 2026-06-07  
-Status: implementation skeleton initialized / CMake build and initial tests passing
+Status: static HTTP/HTTPS browsing path, Aegis block path, engine render pipeline, console shell,
+and durable history foundation implemented / CMake build and tests passing
 
 ## 1. What Speed is
 
@@ -190,13 +191,22 @@ Completed post-skeleton progress:
 2. Network Process request service stub with the Aegis hook in the real request path.
 3. Renderer Process document load stub.
 4. First HTML tokenizer/tree-building subset for static document fragments.
+5. Navigation IPC document payload contract clarified from `body_ref` to `document_body`.
+6. Network fetch adapter boundary added with Aegis-before-dispatch enforcement, simple HTTP static
+   body fetch, and OpenSSL-backed HTTPS fetch.
+7. Renderer commit pipeline extended through HTML parse, CSS/style resolve, layout, and CPU
+   display-list paint output.
+8. Console BrowserShell added for URL navigation, tab create/switch/close/list, history display,
+   page/error display, CLI URL smoke mode, and quit.
+9. Browser-owned durable history file foundation added behind `ProfileDirectory`.
+10. Simulated renderer crash handling transitions the affected tab to crashed state without
+    terminating the Browser Process.
 
 Recommended next milestone sequence:
 
-1. Add the first CSS/style/layout/paint pipeline stubs.
-2. Connect navigation end-to-end for static pages.
-3. Add history persistence behind the Browser Process authority.
-4. Add CI once local build and test flow stabilizes.
+1. Replace in-process app wiring with real process launch, IPC transport, supervision, and recovery
+   while preserving the existing schema-first contracts.
+2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten
 

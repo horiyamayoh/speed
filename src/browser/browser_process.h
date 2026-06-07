@@ -29,6 +29,8 @@ public:
 
   [[nodiscard]] virtual base::Status
   SendCommitDocument(const ipc::navigation::CommitDocument& commit) = 0;
+  [[nodiscard]] virtual base::Status
+  SendCommitErrorPage(const ipc::navigation::CommitErrorPage& commit) = 0;
 };
 
 class BrowserProcess final
@@ -42,15 +44,18 @@ public:
   };
 
   BrowserProcess(NavigationNetworkClient& network_client,
-                 NavigationRendererClient& renderer_client);
+                 NavigationRendererClient& renderer_client,
+                 storage::HistoryStore history_store = {});
 
   [[nodiscard]] base::Status Start();
   [[nodiscard]] base::Status Shutdown();
 
   [[nodiscard]] base::TabId CreateTab();
+  [[nodiscard]] bool CloseTab(base::TabId tab_id);
   [[nodiscard]] bool SwitchToTab(base::TabId tab_id);
   [[nodiscard]] base::Status NavigateActiveTab(std::string_view input);
   [[nodiscard]] base::Status NavigateTab(base::TabId tab_id, std::string_view input);
+  [[nodiscard]] base::Status HandleRendererCrash(base::TabId tab_id, std::string_view reason);
 
   [[nodiscard]] State state() const;
   [[nodiscard]] bool running() const;
@@ -61,6 +66,10 @@ private:
   [[nodiscard]] base::Status
   HandleNavigateResponse(const NavigationRequest& request,
                          const ipc::navigation::NavigateResponse& response);
+  [[nodiscard]] base::Status CommitErrorPage(base::TabId tab_id,
+                                             std::string_view url,
+                                             ipc::navigation::ErrorPageReason reason,
+                                             std::string_view message);
 
   NavigationNetworkClient& network_client_;
   NavigationRendererClient& renderer_client_;

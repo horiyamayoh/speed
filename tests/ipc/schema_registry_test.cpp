@@ -25,13 +25,20 @@ int main()
       .status = speed::ipc::navigation::NavigateStatus::kAllowed,
       .aegis_reason = "no matching Aegis rule",
       .error_message = {},
-      .body_ref = "stub-document:https://example.test",
+      .document_body = "<html><body></body></html>",
   }));
   assert(speed::ipc::navigation::IsValidCommitDocument({
       .tab_id = speed::base::TabId::FromRaw(2),
       .document_id = speed::base::DocumentId::FromRaw(3),
       .url = "https://example.test",
-      .body_ref = "stub-document:https://example.test",
+      .document_body = "<html><body></body></html>",
+  }));
+  assert(speed::ipc::navigation::IsValidCommitErrorPage({
+      .tab_id = speed::base::TabId::FromRaw(2),
+      .document_id = speed::base::DocumentId::FromRaw(4),
+      .url = "https://ads.example",
+      .reason = speed::ipc::navigation::ErrorPageReason::kBlocked,
+      .message = "blocked by test",
   }));
 
   return 0;
