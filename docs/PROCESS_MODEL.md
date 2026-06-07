@@ -13,6 +13,12 @@ Purpose: define process ownership, trust levels, and allowed communication paths
 
 ## 2. v0.1 process topology
 
+Current implementation note: app startup defaults to in-process wiring for stability, while
+`speed-browser --process-model=multi-process` and
+`speed-browser-gui --process-model=multi-process` exercise the real-process v0.1 path. The opt-in
+path launches a Network Process and one Renderer Process per tab as needed, connected by
+schema-defined framed IPC.
+
 ```mermaid
 flowchart TD
     BP[Browser Process\ntrusted authority]
@@ -149,6 +155,8 @@ Every category must have schema ownership under `src/ipc/schemas/` or equivalent
 v0.1 Strong Default:
 
 - At least one Renderer Process per tab/browsing context.
+- Current opt-in multi-process wiring creates one Renderer Process per committed tab path and keeps
+  the Network Process separate from Browser/Renderer code.
 
 Future direction:
 
@@ -167,3 +175,7 @@ Do not design v0.1 APIs that assume renderer-per-tab is permanent.
 - Utility Process crash: task fails; Browser/Renderer receives structured failure.
 
 Crash recovery must prefer explicit state transitions over implicit cleanup.
+
+Process smoke tests must use bounded waits and explicit termination for long-running children. A
+child process test should not depend on external network access, wall-clock sleeps without a
+timeout, or unbounded blocking IPC reads.

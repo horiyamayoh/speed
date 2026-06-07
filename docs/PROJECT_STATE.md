@@ -3,7 +3,8 @@
 Version: v0.1 MVP static browsing path
 Last updated: 2026-06-07  
 Status: static HTTP/HTTPS browsing path, Aegis block path, engine render pipeline, console shell,
-minimal GUI shell, and durable history foundation implemented / CMake build and tests passing
+minimal GUI shell, durable history, process launch, framed IPC, opt-in multi-process navigation,
+and renderer crash recovery implemented / CMake build and tests passing
 
 ## 1. What Speed is
 
@@ -227,10 +228,12 @@ Completed post-skeleton progress:
 19. GUI URL entry polish added within MVP scope: deterministic address bar caret/selection model,
     selection replacement, backspace behavior, caret drawing, and history panel click-to-navigate
     coverage.
+20. Dependency boundary hardening added through a source include scan covering renderer, network,
+    engine, Aegis, and IPC forbidden include directions.
 
 Recommended next milestone sequence:
 
-1. Continue process/docs/test hardening for the opt-in real-process path.
+1. Complete the final v0.1 static browsing acceptance pass and document remaining gaps.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

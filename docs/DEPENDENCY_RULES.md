@@ -110,6 +110,7 @@ v0.1 should include simple enforcement first:
 - Build targets per module.
 - Include path discipline.
 - Review checklist.
+- Source include scan for forbidden lower/upper module imports.
 - Optional dependency graph script later.
 
 Future enforcement:

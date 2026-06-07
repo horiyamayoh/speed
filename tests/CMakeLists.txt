@@ -62,6 +62,10 @@ target_link_libraries(speed_ipc_framed_transport_test PRIVATE speed_ipc)
 speed_add_test(speed_network_aegis_hook_test integration/network_aegis_hook_test.cpp)
 target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
 
+speed_add_test(speed_dependency_boundary_test integration/dependency_boundary_test.cpp)
+target_link_libraries(speed_dependency_boundary_test PRIVATE speed_base)
+target_compile_definitions(speed_dependency_boundary_test PRIVATE SPEED_SOURCE_DIR="${PROJECT_SOURCE_DIR}")
+
 speed_add_test(speed_network_ipc_server_test integration/network_ipc_server_test.cpp)
 target_link_libraries(speed_network_ipc_server_test PRIVATE speed_network)
 
