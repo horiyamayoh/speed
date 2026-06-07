@@ -218,10 +218,13 @@ Completed post-skeleton progress:
 16. Browser-side child process host foundation added with move-only child ownership, supervised
     exit/crash state conversion, tab association for renderer hosts, and explicit shutdown
     termination behavior.
+17. `speed-browser` and `speed-browser-gui` gained opt-in `--process-model=multi-process` app wiring
+    that launches a Network Process and one Renderer Process per committed tab path, using schema
+    IPC for Browser -> Network -> Browser -> Renderer navigation smoke coverage.
 
 Recommended next milestone sequence:
 
-1. Add flag-gated real-process app wiring while preserving the existing schema-first contracts.
+1. Add GUI renderer crash recovery and continue hardening the opt-in real-process path.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

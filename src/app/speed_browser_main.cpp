@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <string_view>
+#include <utility>
 
 namespace
 {
@@ -15,27 +16,65 @@ namespace
 
 void PrintUsage(std::ostream& output)
 {
-  output << "usage: speed-browser [url]\n";
+  output << "usage: speed-browser [--process-model=in-process|multi-process] [url]\n";
   output << "Run without a URL for the interactive console shell.\n";
+}
+
+[[nodiscard]] bool ParseProcessModel(std::string_view argument,
+                                     speed::app::BrowserAppProcessModel& process_model)
+{
+  constexpr std::string_view prefix = "--process-model=";
+  if (!argument.starts_with(prefix))
+  {
+    return false;
+  }
+
+  const std::string_view value = argument.substr(prefix.size());
+  if (value == "in-process")
+  {
+    process_model = speed::app::BrowserAppProcessModel::kInProcess;
+    return true;
+  }
+
+  if (value == "multi-process")
+  {
+    process_model = speed::app::BrowserAppProcessModel::kMultiProcess;
+    return true;
+  }
+
+  return false;
 }
 
 } // namespace
 
 int main(int argc, char* argv[])
 {
-  if (argc > 2)
+  speed::app::BrowserAppOptions options;
+  std::string_view smoke_url;
+  for (int index = 1; index < argc; ++index)
   {
-    PrintUsage(std::cerr);
-    return 1;
+    const std::string_view argument(argv[index]);
+    if (IsHelpArgument(argument))
+    {
+      PrintUsage(std::cout);
+      return 0;
+    }
+
+    if (ParseProcessModel(argument, options.process_model))
+    {
+      continue;
+    }
+
+    if (argument.starts_with("--") || !smoke_url.empty())
+    {
+      PrintUsage(std::cerr);
+      return 1;
+    }
+
+    smoke_url = argument;
   }
 
-  if (argc == 2 && IsHelpArgument(argv[1]))
-  {
-    PrintUsage(std::cout);
-    return 0;
-  }
-
-  speed::app::BrowserApp app;
+  speed::app::BrowserApp app(std::move(options));
   const speed::base::Status start_status = app.Start();
   if (!start_status.ok())
   {
@@ -44,9 +83,9 @@ int main(int argc, char* argv[])
   }
 
   speed::ui::BrowserShell shell(app, std::cin, std::cout);
-  if (argc == 2)
+  if (!smoke_url.empty())
   {
-    const speed::base::Status smoke_status = shell.RunSmokeNavigation(argv[1]);
+    const speed::base::Status smoke_status = shell.RunSmokeNavigation(smoke_url);
     return smoke_status.ok() ? 0 : 1;
   }
 

@@ -129,6 +129,8 @@ int main()
   speed::app::BrowserApp app({
       .profile_root = profile.root(),
       .fetch_adapter = std::make_unique<StaticFetchAdapter>(),
+      .process_model = speed::app::BrowserAppProcessModel::kInProcess,
+      .app_binary_dir = {},
   });
 
   speed::base::Status status = app.Start();

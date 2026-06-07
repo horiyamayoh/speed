@@ -59,6 +59,10 @@ For GUI smoke verification:
 build/src/app/speed-browser-gui --smoke-exit-after-ms=1000
 ```
 
+The default app wiring remains in-process while the v0.1 process path stabilizes.
+Use `--process-model=multi-process` on `speed-browser` or `speed-browser-gui`
+to exercise the opt-in Browser -> Network -> Browser -> Renderer IPC path.
+
 ## Architecture Rules
 
 Start every implementation task by reading:

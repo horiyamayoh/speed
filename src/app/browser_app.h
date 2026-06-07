@@ -12,13 +12,22 @@
 namespace speed::app
 {
 
+enum class BrowserAppProcessModel
+{
+  kInProcess,
+  kMultiProcess,
+};
+
 struct BrowserAppOptions final
 {
   std::filesystem::path profile_root;
   std::unique_ptr<network::FetchAdapter> fetch_adapter;
+  BrowserAppProcessModel process_model{BrowserAppProcessModel::kInProcess};
+  std::filesystem::path app_binary_dir;
 };
 
 [[nodiscard]] std::filesystem::path DefaultProfileRoot();
+[[nodiscard]] std::filesystem::path DefaultAppBinaryDir();
 
 class BrowserApp final : public ui::BrowserShellDelegate
 {

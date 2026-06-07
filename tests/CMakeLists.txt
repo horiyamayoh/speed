@@ -71,3 +71,8 @@ target_link_libraries(speed_navigation_pipeline_test PRIVATE speed_browser speed
 
 speed_add_test(speed_gui_app_smoke_test integration/gui_app_smoke_test.cpp)
 target_link_libraries(speed_gui_app_smoke_test PRIVATE speed_app_core speed_ui_gui)
+
+speed_add_test(speed_multiprocess_navigation_test integration/multiprocess_navigation_test.cpp)
+target_link_libraries(speed_multiprocess_navigation_test PRIVATE speed_app_core)
+add_dependencies(speed_multiprocess_navigation_test speed-network speed-renderer)
+target_compile_definitions(speed_multiprocess_navigation_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")

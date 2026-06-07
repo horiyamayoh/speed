@@ -7,6 +7,7 @@
 #include <iostream>
 #include <string_view>
 #include <system_error>
+#include <utility>
 
 namespace
 {
@@ -40,8 +41,34 @@ namespace
 
 void PrintUsage(std::ostream& output)
 {
-  output << "usage: speed-browser-gui [--smoke-exit-after-ms=<ms>]\n";
+  output << "usage: speed-browser-gui [--process-model=in-process|multi-process] "
+            "[--smoke-exit-after-ms=<ms>]\n";
   output << "Starts the minimal Speed GUI BrowserShell.\n";
+}
+
+[[nodiscard]] bool ParseProcessModel(std::string_view argument,
+                                     speed::app::BrowserAppProcessModel& process_model)
+{
+  constexpr std::string_view prefix = "--process-model=";
+  if (!argument.starts_with(prefix))
+  {
+    return false;
+  }
+
+  const std::string_view value = argument.substr(prefix.size());
+  if (value == "in-process")
+  {
+    process_model = speed::app::BrowserAppProcessModel::kInProcess;
+    return true;
+  }
+
+  if (value == "multi-process")
+  {
+    process_model = speed::app::BrowserAppProcessModel::kMultiProcess;
+    return true;
+  }
+
+  return false;
 }
 
 } // namespace
@@ -49,6 +76,7 @@ void PrintUsage(std::ostream& output)
 int main(int argc, char* argv[])
 {
   int smoke_exit_after_ms = 0;
+  speed::app::BrowserAppOptions options;
   for (int index = 1; index < argc; ++index)
   {
     const std::string_view argument(argv[index]);
@@ -56,6 +84,11 @@ int main(int argc, char* argv[])
     {
       PrintUsage(std::cout);
       return 0;
+    }
+
+    if (ParseProcessModel(argument, options.process_model))
+    {
+      continue;
     }
 
     if (ParseSmokeExit(argument, smoke_exit_after_ms))
@@ -67,7 +100,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  speed::app::BrowserApp app;
+  speed::app::BrowserApp app(std::move(options));
   const speed::base::Status start_status = app.Start();
   if (!start_status.ok())
   {
