@@ -2,6 +2,7 @@
 
 #include "base/ids/id_types.h"
 #include "base/result/status.h"
+#include "engine/paint/display_list.h"
 
 #include <iosfwd>
 #include <optional>
@@ -38,6 +39,8 @@ struct ShellPageSnapshot final
   std::string url;
   std::string document_body;
   bool is_error_page{false};
+  engine::paint::DisplayList display_list;
+  int content_height{0};
 };
 
 struct BrowserShellSnapshot final

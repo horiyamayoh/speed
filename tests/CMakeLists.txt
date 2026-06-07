@@ -37,6 +37,9 @@ target_link_libraries(speed_block_layout_test PRIVATE speed_engine)
 speed_add_test(speed_display_list_test paint/display_list_test.cpp)
 target_link_libraries(speed_display_list_test PRIVATE speed_engine)
 
+speed_add_test(speed_display_list_renderer_test ui/display_list_renderer_test.cpp)
+target_link_libraries(speed_display_list_renderer_test PRIVATE speed_ui_gui)
+
 speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
 target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)
 
@@ -49,3 +52,6 @@ target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
 
 speed_add_test(speed_navigation_pipeline_test integration/navigation_pipeline_test.cpp)
 target_link_libraries(speed_navigation_pipeline_test PRIVATE speed_browser speed_network speed_renderer)
+
+speed_add_test(speed_gui_app_smoke_test integration/gui_app_smoke_test.cpp)
+target_link_libraries(speed_gui_app_smoke_test PRIVATE speed_app_core speed_ui_gui)

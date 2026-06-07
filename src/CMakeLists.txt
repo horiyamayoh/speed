@@ -42,6 +42,22 @@ target_link_libraries(speed_platform PUBLIC speed_base)
 target_include_directories(speed_platform PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_platform)
 
+find_package(X11 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CAIRO REQUIRED IMPORTED_TARGET cairo)
+
+add_library(speed_platform_window
+  platform/window/canvas.h
+  platform/window/window.h
+  platform/window/x11_window.cpp
+)
+target_link_libraries(speed_platform_window
+  PUBLIC speed_base
+  PRIVATE X11::X11 PkgConfig::CAIRO
+)
+target_include_directories(speed_platform_window PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+speed_configure_target(speed_platform_window)
+
 add_library(speed_aegis
   aegis/classifier/request_classifier.cpp
   aegis/classifier/request_classifier.h
@@ -86,9 +102,19 @@ add_library(speed_ui
   ui/shell/browser_shell.cpp
   ui/shell/browser_shell.h
 )
-target_link_libraries(speed_ui PUBLIC speed_base speed_platform)
+target_link_libraries(speed_ui PUBLIC speed_base speed_engine speed_platform)
 target_include_directories(speed_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_ui)
+
+add_library(speed_ui_gui
+  ui/gui/browser_gui_shell.cpp
+  ui/gui/browser_gui_shell.h
+  ui/gui/display_list_renderer.cpp
+  ui/gui/display_list_renderer.h
+)
+target_link_libraries(speed_ui_gui PUBLIC speed_base speed_engine speed_platform_window speed_ui)
+target_include_directories(speed_ui_gui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+speed_configure_target(speed_ui_gui)
 
 add_library(speed_network
   network/fetch/fetch_adapter.h

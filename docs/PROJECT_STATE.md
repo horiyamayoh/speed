@@ -3,7 +3,7 @@
 Version: v0.1 MVP static browsing path
 Last updated: 2026-06-07  
 Status: static HTTP/HTTPS browsing path, Aegis block path, engine render pipeline, console shell,
-and durable history foundation implemented / CMake build and tests passing
+minimal GUI shell, and durable history foundation implemented / CMake build and tests passing
 
 ## 1. What Speed is
 
@@ -201,6 +201,9 @@ Completed post-skeleton progress:
 9. Browser-owned durable history file foundation added behind `ProfileDirectory`.
 10. Simulated renderer crash handling transitions the affected tab to crashed state without
     terminating the Browser Process.
+11. Minimal GUI BrowserShell added as `speed-browser-gui` with X11/Cairo platform windowing, URL
+    entry, tab create/switch/close, active page display-list painting, Aegis/error page display,
+    history panel, and GUI/app smoke coverage.
 
 Recommended next milestone sequence:
 

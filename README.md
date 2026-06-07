@@ -7,11 +7,16 @@ CMake targets, and test hooks are in place so focused development can begin.
 ## Current Scope
 
 The v0.1 target is static browsing with a minimal Browser Process, Renderer
-Process, Network Process, schema-first IPC, basic engine pipeline, history, and
-Aegis request blocking foundation. See `docs/PROJECT_STATE.md` and
-`docs/MVP_SCOPE.md` before implementing features.
+Process, Network Process, schema-first IPC, basic engine pipeline, minimal GUI
+shell, history, and Aegis request blocking foundation. See
+`docs/PROJECT_STATE.md` and `docs/MVP_SCOPE.md` before implementing features.
 
 ## Build
+
+System dependencies for the default dev build:
+
+- OpenSSL development files for MVP HTTPS fetch.
+- X11 and Cairo development files for `speed-browser-gui`.
 
 ```sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
@@ -40,10 +45,19 @@ warnings stay focused on Speed-owned source.
 
 The main development executables are:
 
-- `build/src/app/speed-browser`
+- `build/src/app/speed-browser`: interactive console shell, or smoke URL mode
+  with `build/src/app/speed-browser https://example.com/`.
+- `build/src/app/speed-browser-gui`: minimal GUI shell with tabs, URL entry,
+  page display, Aegis/error display, and history panel.
 - `build/src/app/speed-renderer`
 - `build/src/app/speed-network`
 - `build/src/app/speed-utility`
+
+For GUI smoke verification:
+
+```sh
+build/src/app/speed-browser-gui --smoke-exit-after-ms=1000
+```
 
 ## Architecture Rules
 
