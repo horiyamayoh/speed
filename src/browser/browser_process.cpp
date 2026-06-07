@@ -4,7 +4,9 @@
 #include "ui/shell/browser_shell.h"
 
 #include <optional>
+#include <string>
 #include <string_view>
+#include <utility>
 
 namespace speed::browser
 {
@@ -15,6 +17,12 @@ namespace
 constexpr std::string_view kInitialUrl = "about:blank";
 
 } // namespace
+
+BrowserProcess::BrowserProcess(NavigationNetworkClient& network_client,
+                               NavigationRendererClient& renderer_client)
+    : network_client_(network_client),
+      renderer_client_(renderer_client)
+{}
 
 base::Status BrowserProcess::Start()
 {
@@ -60,6 +68,26 @@ base::Status BrowserProcess::Shutdown()
   return base::Status::Ok();
 }
 
+base::TabId BrowserProcess::CreateTab()
+{
+  if (state_ != State::kRunning)
+  {
+    return {};
+  }
+
+  return tabs_.CreateTab();
+}
+
+bool BrowserProcess::SwitchToTab(base::TabId tab_id)
+{
+  if (state_ != State::kRunning)
+  {
+    return false;
+  }
+
+  return tabs_.SwitchToTab(tab_id);
+}
+
 base::Status BrowserProcess::NavigateActiveTab(std::string_view input)
 {
   const base::TabId tab_id = tabs_.active_tab();
@@ -90,7 +118,21 @@ base::Status BrowserProcess::NavigateTab(base::TabId tab_id, std::string_view in
     return base::Status::Error("navigation request is invalid");
   }
 
-  return history_.RecordVisit(request->url);
+  base::Status status =
+      tabs_.StartNavigation(tab_id, request->request_id, std::string(request->url));
+  if (!status.ok())
+  {
+    return status;
+  }
+
+  const ipc::navigation::NavigateResponse response = network_client_.SendNavigateRequest({
+      .request_id = request->request_id,
+      .tab_id = request->tab_id,
+      .url = request->url,
+      .is_top_level = true,
+  });
+
+  return HandleNavigateResponse(*request, response);
 }
 
 BrowserProcess::State BrowserProcess::state() const
@@ -113,17 +155,86 @@ const storage::HistoryStore& BrowserProcess::history() const
   return history_;
 }
 
-int RunBrowserProcess()
+base::Status
+BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
+                                       const ipc::navigation::NavigateResponse& response)
 {
-  BrowserProcess process;
-  const base::Status start_status = process.Start();
-  if (!start_status.ok())
+  if (response.request_id != request.request_id)
   {
-    base::Log(base::LogLevel::kError, "browser", start_status.message());
-    return 1;
+    (void)tabs_.FailNavigation(request.tab_id,
+                               request.request_id,
+                               "navigation response request id mismatch");
+    return base::Status::Error("navigation response request id mismatch");
   }
 
-  return 0;
+  if (!ipc::navigation::IsValidNavigateResponse(response))
+  {
+    (void)tabs_.FailNavigation(request.tab_id,
+                               request.request_id,
+                               "invalid navigation response");
+    return base::Status::Error("invalid navigation response");
+  }
+
+  switch (response.status)
+  {
+  case ipc::navigation::NavigateStatus::kAllowed:
+  {
+    const base::DocumentId document_id = base::DocumentId::FromRaw(next_document_id_++);
+    const ipc::navigation::CommitDocument commit = {
+        .tab_id = request.tab_id,
+        .document_id = document_id,
+        .url = request.url,
+        .body_ref = response.body_ref,
+    };
+
+    base::Status status = renderer_client_.SendCommitDocument(commit);
+    if (!status.ok())
+    {
+      (void)tabs_.FailNavigation(request.tab_id, request.request_id, status.message());
+      return status;
+    }
+
+    status = tabs_.CommitNavigation(request.tab_id,
+                                    request.request_id,
+                                    document_id,
+                                    std::string(request.url));
+    if (!status.ok())
+    {
+      return status;
+    }
+
+    return history_.RecordVisit(request.url);
+  }
+  case ipc::navigation::NavigateStatus::kBlocked:
+  {
+    const std::string reason = response.aegis_reason.empty() ? "navigation blocked"
+                                                             : response.aegis_reason;
+    const base::Status status =
+        tabs_.BlockNavigation(request.tab_id, request.request_id, reason);
+    if (!status.ok())
+    {
+      return status;
+    }
+
+    return base::Status::Error("navigation blocked: " + reason);
+  }
+  case ipc::navigation::NavigateStatus::kFailed:
+  {
+    const std::string reason = response.error_message.empty() ? "navigation failed"
+                                                              : response.error_message;
+    const base::Status status =
+        tabs_.FailNavigation(request.tab_id, request.request_id, reason);
+    if (!status.ok())
+    {
+      return status;
+    }
+
+    return base::Status::Error("navigation failed: " + reason);
+  }
+  }
+
+  (void)tabs_.FailNavigation(request.tab_id, request.request_id, "unknown navigation response");
+  return base::Status::Error("unknown navigation response");
 }
 
 } // namespace speed::browser

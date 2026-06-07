@@ -16,6 +16,9 @@ target_link_libraries(speed_navigation_controller_test PRIVATE speed_browser)
 speed_add_test(speed_browser_process_test unit/browser_process_test.cpp)
 target_link_libraries(speed_browser_process_test PRIVATE speed_browser)
 
+speed_add_test(speed_renderer_process_test unit/renderer_process_test.cpp)
+target_link_libraries(speed_renderer_process_test PRIVATE speed_renderer)
+
 speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
 target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)
 
@@ -25,3 +28,6 @@ target_compile_definitions(speed_ipc_schema_test PRIVATE SPEED_SOURCE_DIR="${PRO
 
 speed_add_test(speed_network_aegis_hook_test integration/network_aegis_hook_test.cpp)
 target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
+
+speed_add_test(speed_navigation_pipeline_test integration/navigation_pipeline_test.cpp)
+target_link_libraries(speed_navigation_pipeline_test PRIVATE speed_browser speed_network speed_renderer)

@@ -10,6 +10,7 @@ message NavigateRequest {
     request_id: u64
     tab_id: u64
     url: string
+    is_top_level: bool
 }
 
 message NavigateResponse {
@@ -19,6 +20,7 @@ message NavigateResponse {
     request_id: u64
     status: enum(allowed, blocked, failed)
     aegis_reason: string
+    error_message: string
     body_ref: string
 }
 
@@ -28,6 +30,6 @@ message CommitDocument {
   fields:
     tab_id: u64
     document_id: u64
+    url: string
     body_ref: string
 }
-

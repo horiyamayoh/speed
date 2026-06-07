@@ -2,8 +2,20 @@
 
 #include "base/logging/logging.h"
 
+#include <utility>
+
 namespace speed::network
 {
+
+NetworkProcess::NetworkProcess(NetworkService service)
+    : service_(std::move(service))
+{}
+
+ipc::navigation::NavigateResponse
+NetworkProcess::HandleNavigateRequest(const ipc::navigation::NavigateRequest& request) const
+{
+  return service_.FetchNavigation(request);
+}
 
 int RunNetworkProcess()
 {

@@ -7,9 +7,28 @@ add_library(speed_base
 target_include_directories(speed_base PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_base)
 
+function(speed_assert_target_not_linking target_name)
+  set(all_links)
+  foreach(link_property LINK_LIBRARIES INTERFACE_LINK_LIBRARIES)
+    get_target_property(links ${target_name} ${link_property})
+    if(links)
+      list(APPEND all_links ${links})
+    endif()
+  endforeach()
+
+  foreach(forbidden_target IN LISTS ARGN)
+    if(forbidden_target IN_LIST all_links)
+      message(FATAL_ERROR
+        "${target_name} must not link ${forbidden_target}; this would violate Speed process authority boundaries")
+    endif()
+  endforeach()
+endfunction()
+
 add_library(speed_ipc
   ipc/runtime/message.cpp
   ipc/runtime/message.h
+  ipc/runtime/navigation_messages.cpp
+  ipc/runtime/navigation_messages.h
 )
 target_link_libraries(speed_ipc PUBLIC speed_base)
 target_include_directories(speed_ipc PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -76,6 +95,7 @@ add_library(speed_renderer
 target_link_libraries(speed_renderer PUBLIC speed_base speed_engine speed_ipc speed_platform)
 target_include_directories(speed_renderer PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_renderer)
+speed_assert_target_not_linking(speed_renderer speed_network speed_storage)
 
 add_library(speed_browser
   browser/browser_process.cpp
@@ -85,9 +105,10 @@ add_library(speed_browser
   browser/tabs/tab_model.cpp
   browser/tabs/tab_model.h
 )
-target_link_libraries(speed_browser PUBLIC speed_aegis speed_base speed_ipc speed_platform speed_storage speed_ui)
+target_link_libraries(speed_browser PUBLIC speed_base speed_ipc speed_platform speed_storage speed_ui)
 target_include_directories(speed_browser PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_browser)
+speed_assert_target_not_linking(speed_browser speed_network speed_renderer)
 
 add_library(speed_utility
   utility/utility_process.cpp
@@ -98,4 +119,3 @@ target_include_directories(speed_utility PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_utility)
 
 add_subdirectory(app)
-

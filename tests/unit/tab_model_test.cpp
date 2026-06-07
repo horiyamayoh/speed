@@ -11,6 +11,38 @@ int main()
   const speed::base::TabId first = tabs.CreateTab();
   const speed::base::TabId second = tabs.CreateTab();
   const speed::base::TabId third = tabs.CreateTab();
+  const speed::browser::TabState* first_state = tabs.GetTabState(first);
+  const speed::browser::TabState* second_state = tabs.GetTabState(second);
+  assert(first_state != nullptr);
+  assert(second_state != nullptr);
+  assert(first_state->navigation_state == speed::browser::TabNavigationState::kEmpty);
+
+  assert(tabs.StartNavigation(first,
+                              speed::base::RequestId::FromRaw(11),
+                              "https://first.test")
+             .ok());
+  assert(tabs.CommitNavigation(first,
+                               speed::base::RequestId::FromRaw(11),
+                               speed::base::DocumentId::FromRaw(21),
+                               "https://first.test")
+             .ok());
+  assert(tabs.StartNavigation(second,
+                              speed::base::RequestId::FromRaw(12),
+                              "https://blocked.test")
+             .ok());
+  assert(tabs.BlockNavigation(second,
+                              speed::base::RequestId::FromRaw(12),
+                              "blocked by unit test")
+             .ok());
+  first_state = tabs.GetTabState(first);
+  second_state = tabs.GetTabState(second);
+  assert(first_state != nullptr);
+  assert(second_state != nullptr);
+  assert(first_state->navigation_state == speed::browser::TabNavigationState::kCommitted);
+  assert(first_state->current_url == "https://first.test");
+  assert(second_state->navigation_state == speed::browser::TabNavigationState::kBlocked);
+  assert(second_state->current_url.empty());
+  assert(second_state->last_error == "blocked by unit test");
 
   assert(tabs.tab_count() == 3);
   assert(first.value() == 1);
