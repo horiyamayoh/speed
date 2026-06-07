@@ -13,6 +13,8 @@ namespace speed::ipc::navigation
 namespace
 {
 
+constexpr std::uint32_t kMaxRenderDisplayCommands = 100000;
+
 class PayloadWriter final
 {
 public:
@@ -24,6 +26,19 @@ public:
   void WriteBool(bool value)
   {
     WriteU8(value ? 1U : 0U);
+  }
+
+  void WriteU32(std::uint32_t value)
+  {
+    for (int shift = 24; shift >= 0; shift -= 8)
+    {
+      payload_.push_back(static_cast<char>((value >> shift) & 0xffU));
+    }
+  }
+
+  void WriteI32(std::int32_t value)
+  {
+    WriteU32(static_cast<std::uint32_t>(value));
   }
 
   void WriteU64(std::uint64_t value)
@@ -40,10 +55,7 @@ public:
         value.size() <= static_cast<std::size_t>(std::numeric_limits<std::uint32_t>::max())
             ? static_cast<std::uint32_t>(value.size())
             : 0;
-    for (int shift = 24; shift >= 0; shift -= 8)
-    {
-      payload_.push_back(static_cast<char>((size >> shift) & 0xffU));
-    }
+    WriteU32(size);
     payload_.append(value.data(), value.size());
   }
 
@@ -104,6 +116,35 @@ public:
     return true;
   }
 
+  [[nodiscard]] bool ReadU32(std::uint32_t& value)
+  {
+    if (payload_.size() - offset_ < sizeof(std::uint32_t))
+    {
+      return false;
+    }
+
+    value = 0;
+    for (int index = 0; index < 4; ++index)
+    {
+      value <<= 8U;
+      value |= static_cast<std::uint8_t>(payload_[offset_ + static_cast<std::size_t>(index)]);
+    }
+    offset_ += sizeof(std::uint32_t);
+    return true;
+  }
+
+  [[nodiscard]] bool ReadI32(std::int32_t& value)
+  {
+    std::uint32_t raw = 0;
+    if (!ReadU32(raw))
+    {
+      return false;
+    }
+
+    value = static_cast<std::int32_t>(raw);
+    return true;
+  }
+
   [[nodiscard]] bool ReadString(std::string& value)
   {
     std::uint32_t size = 0;
@@ -123,23 +164,6 @@ public:
   }
 
 private:
-  [[nodiscard]] bool ReadU32(std::uint32_t& value)
-  {
-    if (payload_.size() - offset_ < sizeof(std::uint32_t))
-    {
-      return false;
-    }
-
-    value = 0;
-    for (int index = 0; index < 4; ++index)
-    {
-      value <<= 8U;
-      value |= static_cast<std::uint8_t>(payload_[offset_ + static_cast<std::size_t>(index)]);
-    }
-    offset_ += sizeof(std::uint32_t);
-    return true;
-  }
-
   std::string_view payload_;
   std::size_t offset_{0};
 };
@@ -194,6 +218,44 @@ private:
   return base::Status::Ok();
 }
 
+void WriteRenderCommand(PayloadWriter& writer, const RenderDisplayCommand& command)
+{
+  writer.WriteU8(static_cast<std::uint8_t>(command.type));
+  writer.WriteI32(command.x);
+  writer.WriteI32(command.y);
+  writer.WriteI32(command.width);
+  writer.WriteI32(command.height);
+  writer.WriteU8(command.color_red);
+  writer.WriteU8(command.color_green);
+  writer.WriteU8(command.color_blue);
+  writer.WriteU8(command.color_alpha);
+  writer.WriteI32(command.border_top);
+  writer.WriteI32(command.border_right);
+  writer.WriteI32(command.border_bottom);
+  writer.WriteI32(command.border_left);
+  writer.WriteI32(command.font_size_px);
+  writer.WriteString(command.text);
+}
+
+[[nodiscard]] bool ReadRenderCommand(PayloadReader& reader, RenderDisplayCommand& command)
+{
+  std::uint8_t type = 0;
+  if (!reader.ReadU8(type) ||
+      type > static_cast<std::uint8_t>(RenderCommandType::kImagePlaceholder))
+  {
+    return false;
+  }
+
+  command.type = static_cast<RenderCommandType>(type);
+  return reader.ReadI32(command.x) && reader.ReadI32(command.y) && reader.ReadI32(command.width) &&
+         reader.ReadI32(command.height) && reader.ReadU8(command.color_red) &&
+         reader.ReadU8(command.color_green) && reader.ReadU8(command.color_blue) &&
+         reader.ReadU8(command.color_alpha) && reader.ReadI32(command.border_top) &&
+         reader.ReadI32(command.border_right) && reader.ReadI32(command.border_bottom) &&
+         reader.ReadI32(command.border_left) && reader.ReadI32(command.font_size_px) &&
+         reader.ReadString(command.text);
+}
+
 } // namespace
 
 Message EncodeNavigateRequest(const NavigateRequest& request)
@@ -240,6 +302,27 @@ Message EncodeCommitErrorPage(const CommitErrorPage& commit)
   writer.WriteString(commit.message);
   return MakeNavigationMessage(
       ProcessRole::kBrowser, ProcessRole::kRenderer, kCommitErrorPageMessageName, writer.Finish());
+}
+
+Message EncodeRenderReady(const RenderReady& ready)
+{
+  PayloadWriter writer;
+  writer.WriteU64(ready.tab_id.value());
+  writer.WriteU64(ready.document_id.value());
+  writer.WriteBool(ready.ok);
+  writer.WriteBool(ready.is_error_page);
+  writer.WriteI32(ready.content_height);
+  writer.WriteString(ready.error_message);
+  writer.WriteU32(ready.display_commands.size() <= kMaxRenderDisplayCommands
+                      ? static_cast<std::uint32_t>(ready.display_commands.size())
+                      : 0);
+  for (const RenderDisplayCommand& command : ready.display_commands)
+  {
+    WriteRenderCommand(writer, command);
+  }
+
+  return MakeNavigationMessage(
+      ProcessRole::kRenderer, ProcessRole::kBrowser, kRenderReadyMessageName, writer.Finish());
 }
 
 base::Status DecodeNavigateRequest(const Message& message, NavigateRequest& request)
@@ -386,6 +469,59 @@ base::Status DecodeCommitErrorPage(const Message& message, CommitErrorPage& comm
   if (!IsValidCommitErrorPage(commit))
   {
     return base::Status::Error("CommitErrorPage payload is invalid");
+  }
+
+  return base::Status::Ok();
+}
+
+base::Status DecodeRenderReady(const Message& message, RenderReady& ready)
+{
+  base::Status status = EnsureNavigationMessage(
+      message, ProcessRole::kRenderer, ProcessRole::kBrowser, kRenderReadyMessageName);
+  if (!status.ok())
+  {
+    return status;
+  }
+
+  PayloadReader reader(message.payload());
+  std::uint64_t tab_id = 0;
+  std::uint64_t document_id = 0;
+  std::uint32_t command_count = 0;
+  if (!reader.ReadU64(tab_id) || !reader.ReadU64(document_id) || !reader.ReadBool(ready.ok) ||
+      !reader.ReadBool(ready.is_error_page) || !reader.ReadI32(ready.content_height) ||
+      !reader.ReadString(ready.error_message) || !reader.ReadU32(command_count))
+  {
+    return base::Status::Error("RenderReady payload is malformed");
+  }
+
+  if (command_count > kMaxRenderDisplayCommands)
+  {
+    return base::Status::Error("RenderReady command count exceeds the limit");
+  }
+
+  ready.display_commands.clear();
+  ready.display_commands.reserve(command_count);
+  for (std::uint32_t index = 0; index < command_count; ++index)
+  {
+    RenderDisplayCommand command;
+    if (!ReadRenderCommand(reader, command))
+    {
+      return base::Status::Error("RenderReady display command is malformed");
+    }
+    ready.display_commands.push_back(std::move(command));
+  }
+
+  status = EnsureAtEnd(reader);
+  if (!status.ok())
+  {
+    return status;
+  }
+
+  ready.tab_id = base::TabId::FromRaw(tab_id);
+  ready.document_id = base::DocumentId::FromRaw(document_id);
+  if (!IsValidRenderReady(ready))
+  {
+    return base::Status::Error("RenderReady payload is invalid");
   }
 
   return base::Status::Ok();

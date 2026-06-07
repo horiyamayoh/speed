@@ -81,6 +81,41 @@ void DecodesNavigationMessages()
   assert(status.ok());
   assert(decoded_error_page.reason == error_page.reason);
   assert(decoded_error_page.message == error_page.message);
+
+  const speed::ipc::navigation::RenderReady ready{
+      .tab_id = request.tab_id,
+      .document_id = speed::base::DocumentId::FromRaw(11),
+      .ok = true,
+      .is_error_page = false,
+      .content_height = 48,
+      .error_message = {},
+      .display_commands =
+          {
+              {
+                  .type = speed::ipc::navigation::RenderCommandType::kText,
+                  .x = 2,
+                  .y = 4,
+                  .width = 40,
+                  .height = 18,
+                  .color_red = 1,
+                  .color_green = 2,
+                  .color_blue = 3,
+                  .color_alpha = 255,
+                  .font_size_px = 18,
+                  .text = "Ready",
+              },
+          },
+  };
+  message = speed::ipc::navigation::EncodeRenderReady(ready);
+  status = speed::ipc::DecodeMessage(speed::ipc::EncodeMessage(message), decoded);
+  assert(status.ok());
+  speed::ipc::navigation::RenderReady decoded_ready;
+  status = speed::ipc::navigation::DecodeRenderReady(decoded, decoded_ready);
+  assert(status.ok());
+  assert(decoded_ready.document_id == ready.document_id);
+  assert(decoded_ready.content_height == ready.content_height);
+  assert(decoded_ready.display_commands.size() == 1);
+  assert(decoded_ready.display_commands.front().text == "Ready");
 }
 
 void RejectsMalformedFramesAndPayloads()

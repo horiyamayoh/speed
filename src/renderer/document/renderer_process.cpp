@@ -3,6 +3,7 @@
 #include "base/logging/logging.h"
 #include "engine/html/html_parser.h"
 #include "engine/render_pipeline.h"
+#include "renderer/document/renderer_ipc_server.h"
 
 #include <string>
 #include <string_view>
@@ -137,8 +138,22 @@ std::vector<CommittedDocument> RendererProcess::committed_documents() const
   return committed_documents_;
 }
 
-int RunRendererProcess()
+int RunRendererProcess(int ipc_fd)
 {
+  if (ipc_fd >= 0)
+  {
+    RendererProcess process;
+    RendererIpcServer server(process, ipc::FileDescriptorTransport(ipc_fd));
+    const base::Status status = server.RunUntilClosed();
+    if (!status.ok())
+    {
+      base::Log(base::LogLevel::kError, "renderer", status.message());
+      return 1;
+    }
+
+    return 0;
+  }
+
   RendererProcess process;
   const base::Status commit_status = process.CommitDocument({
       .tab_id = base::TabId::FromRaw(1),

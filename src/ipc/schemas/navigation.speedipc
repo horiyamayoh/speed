@@ -44,3 +44,35 @@ message CommitErrorPage {
     reason: enum(blocked, failed, crashed)
     message: string
 }
+
+message RenderReady {
+  sender: Renderer
+  receiver: Browser
+  fields:
+    tab_id: u64
+    document_id: u64
+    ok: bool
+    is_error_page: bool
+    content_height: i32
+    error_message: string
+    display_commands: list<DisplayCommand>
+}
+
+struct DisplayCommand {
+  fields:
+    type: enum(rect, text, border, image_placeholder)
+    x: i32
+    y: i32
+    width: i32
+    height: i32
+    color_red: u8
+    color_green: u8
+    color_blue: u8
+    color_alpha: u8
+    border_top: i32
+    border_right: i32
+    border_bottom: i32
+    border_left: i32
+    font_size_px: i32
+    text: string
+}

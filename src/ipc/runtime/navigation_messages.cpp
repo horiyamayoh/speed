@@ -39,6 +39,45 @@ bool IsValidCommitErrorPage(const CommitErrorPage& commit)
   return commit.tab_id && commit.document_id && !commit.url.empty() && !commit.message.empty();
 }
 
+bool IsValidRenderReady(const RenderReady& ready)
+{
+  if (!ready.tab_id || !ready.document_id || ready.content_height < 0)
+  {
+    return false;
+  }
+
+  if (ready.ok && !ready.error_message.empty())
+  {
+    return false;
+  }
+
+  if (!ready.ok && ready.error_message.empty())
+  {
+    return false;
+  }
+
+  for (const RenderDisplayCommand& command : ready.display_commands)
+  {
+    if (command.width < 0 || command.height < 0 || command.font_size_px < 0)
+    {
+      return false;
+    }
+
+    switch (command.type)
+    {
+    case RenderCommandType::kRect:
+    case RenderCommandType::kText:
+    case RenderCommandType::kBorder:
+    case RenderCommandType::kImagePlaceholder:
+      break;
+    default:
+      return false;
+    }
+  }
+
+  return true;
+}
+
 std::string_view NavigateStatusName(NavigateStatus status)
 {
   switch (status)
@@ -64,6 +103,23 @@ std::string_view ErrorPageReasonName(ErrorPageReason reason)
     return "failed";
   case ErrorPageReason::kCrashed:
     return "crashed";
+  }
+
+  return "unknown";
+}
+
+std::string_view RenderCommandTypeName(RenderCommandType type)
+{
+  switch (type)
+  {
+  case RenderCommandType::kRect:
+    return "rect";
+  case RenderCommandType::kText:
+    return "text";
+  case RenderCommandType::kBorder:
+    return "border";
+  case RenderCommandType::kImagePlaceholder:
+    return "image_placeholder";
   }
 
   return "unknown";

@@ -137,6 +137,8 @@ target_include_directories(speed_network PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_network)
 
 add_library(speed_renderer
+  renderer/document/renderer_ipc_server.cpp
+  renderer/document/renderer_ipc_server.h
   renderer/document/renderer_process.cpp
   renderer/document/renderer_process.h
 )

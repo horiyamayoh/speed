@@ -19,6 +19,7 @@ int main()
   assert(speed::ipc::navigation::kNavigateResponseMessageName == "NavigateResponse");
   assert(speed::ipc::navigation::kCommitDocumentMessageName == "CommitDocument");
   assert(speed::ipc::navigation::kCommitErrorPageMessageName == "CommitErrorPage");
+  assert(speed::ipc::navigation::kRenderReadyMessageName == "RenderReady");
   assert(speed::ipc::navigation::IsValidNavigateRequest({
       .request_id = speed::base::RequestId::FromRaw(1),
       .tab_id = speed::base::TabId::FromRaw(2),
@@ -44,6 +45,26 @@ int main()
       .url = "https://ads.example",
       .reason = speed::ipc::navigation::ErrorPageReason::kBlocked,
       .message = "blocked by test",
+  }));
+  assert(speed::ipc::navigation::IsValidRenderReady({
+      .tab_id = speed::base::TabId::FromRaw(2),
+      .document_id = speed::base::DocumentId::FromRaw(4),
+      .ok = true,
+      .is_error_page = false,
+      .content_height = 24,
+      .error_message = {},
+      .display_commands =
+          {
+              {
+                  .type = speed::ipc::navigation::RenderCommandType::kText,
+                  .x = 0,
+                  .y = 0,
+                  .width = 10,
+                  .height = 16,
+                  .font_size_px = 16,
+                  .text = "Speed",
+              },
+          },
   }));
 
   return 0;

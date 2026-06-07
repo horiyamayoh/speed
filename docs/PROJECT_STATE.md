@@ -212,11 +212,14 @@ Completed post-skeleton progress:
     rejection tests.
 14. Network Process IPC server added for `NavigateRequest` / `NavigateResponse`, reusing the
     existing NetworkService path so Aegis classification still happens before external dispatch.
+15. Renderer Process IPC server added for `CommitDocument` / `CommitErrorPage`, with schema-first
+    `RenderReady` responses carrying render status, content height, and IPC-owned display command
+    data.
 
 Recommended next milestone sequence:
 
-1. Add Renderer IPC server, supervision, and flag-gated real-process app wiring while preserving the
-   existing schema-first contracts.
+1. Add supervision and flag-gated real-process app wiring while preserving the existing
+   schema-first contracts.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

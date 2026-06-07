@@ -39,6 +39,6 @@ private:
   std::vector<CommittedDocument> committed_documents_;
 };
 
-int RunRendererProcess();
+int RunRendererProcess(int ipc_fd = -1);
 
 } // namespace speed::renderer
