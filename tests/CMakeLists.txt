@@ -91,3 +91,8 @@ speed_add_test(speed_renderer_crash_recovery_test integration/renderer_crash_rec
 target_link_libraries(speed_renderer_crash_recovery_test PRIVATE speed_app_core)
 add_dependencies(speed_renderer_crash_recovery_test speed-network speed-renderer)
 target_compile_definitions(speed_renderer_crash_recovery_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")
+
+speed_add_test(speed_v0_1_static_acceptance_test integration/v0_1_static_acceptance_test.cpp)
+target_link_libraries(speed_v0_1_static_acceptance_test PRIVATE speed_app_core)
+add_dependencies(speed_v0_1_static_acceptance_test speed-network speed-renderer)
+target_compile_definitions(speed_v0_1_static_acceptance_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")

@@ -230,6 +230,29 @@ Completed post-skeleton progress:
     coverage.
 20. Dependency boundary hardening added through a source include scan covering renderer, network,
     engine, Aegis, and IPC forbidden include directions.
+21. Final v0.1 static browsing acceptance coverage added across in-process static rendering,
+    Aegis blocking/history/tabs, opt-in multi-process IPC navigation, and renderer crash recovery.
+
+Current v0.1 acceptance status:
+
+- Browser shells start reliably in console and GUI smoke modes.
+- Static URL navigation is covered in-process with basic HTML/CSS render output and history writes.
+- The opt-in multi-process path covers Browser -> Network -> Browser -> Renderer IPC using
+  `about:blank` and Aegis-blocked URLs without external network dependency.
+- Aegis blocks the embedded `ads.example` MVP rule before dispatch in both in-process and
+  multi-process paths.
+- Renderer child crashes are converted to tab crashed state while the Browser Process remains
+  running and exposes a local crash page snapshot.
+- Dependency direction checks now cover the highest-risk forbidden include directions.
+
+Remaining v0.1 gaps / explicit limits:
+
+- Multi-process mode is opt-in; default app wiring remains in-process while the process path
+  continues to harden.
+- Automated tests avoid external internet dependency, so live HTTP/HTTPS fetching remains covered
+  by focused adapter behavior and manual smoke rather than network-dependent CI tests.
+- JS, cookies, media, GPU compositing, full CSS/HTML compatibility, DevTools, and browser-engine
+  embedding remain outside v0.1 scope.
 
 Recommended next milestone sequence:
 
