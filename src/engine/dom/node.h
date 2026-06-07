@@ -14,11 +14,18 @@ enum class NodeType : std::uint8_t
   kText,
 };
 
+struct Attribute final
+{
+  std::string name;
+  std::string value;
+};
+
 struct Node final
 {
   NodeType type{NodeType::kDocument};
   std::string name;
   std::string text;
+  std::vector<Attribute> attributes;
   std::vector<Node> children;
 };
 

@@ -19,6 +19,9 @@ target_link_libraries(speed_browser_process_test PRIVATE speed_browser)
 speed_add_test(speed_renderer_process_test unit/renderer_process_test.cpp)
 target_link_libraries(speed_renderer_process_test PRIVATE speed_renderer)
 
+speed_add_test(speed_html_parser_test html/html_parser_test.cpp)
+target_link_libraries(speed_html_parser_test PRIVATE speed_engine)
+
 speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
 target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)
 

@@ -184,16 +184,19 @@ Completed skeleton setup:
 7. Formatting and static-analysis foundation: Allman clang-format, scoped clang-tidy, Prettier, npm scripts, and CMake presets.
 8. Strict compiler warning foundation with warnings-as-errors enabled for Speed-owned targets.
 
+Completed post-skeleton progress:
+
+1. Browser Process lifecycle and expanded in-memory tab model.
+2. Network Process request service stub with the Aegis hook in the real request path.
+3. Renderer Process document load stub.
+4. First HTML tokenizer/tree-building subset for static document fragments.
+
 Recommended next milestone sequence:
 
-1. Implement Browser Process lifecycle and expand the tab model.
-2. Implement Network Process request service stub with the Aegis hook in the real request path.
-3. Implement Renderer Process document load stub.
-4. Replace the placeholder HTML parser with the first tokenization/tree-building subset.
-5. Add the first CSS/style/layout/paint pipeline stubs.
-6. Connect navigation end-to-end for static pages.
-7. Add history persistence behind the Browser Process authority.
-8. Add CI once local build and test flow stabilizes.
+1. Add the first CSS/style/layout/paint pipeline stubs.
+2. Connect navigation end-to-end for static pages.
+3. Add history persistence behind the Browser Process authority.
+4. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten
 

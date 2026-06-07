@@ -95,9 +95,8 @@ base::TabId TabModel::active_tab() const
   return active_tab_;
 }
 
-base::Status TabModel::StartNavigation(base::TabId tab_id,
-                                       base::RequestId request_id,
-                                       std::string url)
+base::Status
+TabModel::StartNavigation(base::TabId tab_id, base::RequestId request_id, std::string url)
 {
   if (!request_id)
   {
@@ -152,9 +151,8 @@ base::Status TabModel::CommitNavigation(base::TabId tab_id,
   return base::Status::Ok();
 }
 
-base::Status TabModel::BlockNavigation(base::TabId tab_id,
-                                       base::RequestId request_id,
-                                       std::string reason)
+base::Status
+TabModel::BlockNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason)
 {
   const auto tab = FindTab(tab_id);
   if (tab == tabs_.end())
@@ -174,9 +172,8 @@ base::Status TabModel::BlockNavigation(base::TabId tab_id,
   return base::Status::Ok();
 }
 
-base::Status TabModel::FailNavigation(base::TabId tab_id,
-                                      base::RequestId request_id,
-                                      std::string reason)
+base::Status
+TabModel::FailNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason)
 {
   const auto tab = FindTab(tab_id);
   if (tab == tabs_.end())

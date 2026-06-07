@@ -44,19 +44,16 @@ public:
   [[nodiscard]] std::size_t tab_count() const;
   [[nodiscard]] base::TabId active_tab() const;
 
-  [[nodiscard]] base::Status StartNavigation(base::TabId tab_id,
-                                             base::RequestId request_id,
-                                             std::string url);
+  [[nodiscard]] base::Status
+  StartNavigation(base::TabId tab_id, base::RequestId request_id, std::string url);
   [[nodiscard]] base::Status CommitNavigation(base::TabId tab_id,
                                               base::RequestId request_id,
                                               base::DocumentId document_id,
                                               std::string url);
-  [[nodiscard]] base::Status BlockNavigation(base::TabId tab_id,
-                                             base::RequestId request_id,
-                                             std::string reason);
-  [[nodiscard]] base::Status FailNavigation(base::TabId tab_id,
-                                            base::RequestId request_id,
-                                            std::string reason);
+  [[nodiscard]] base::Status
+  BlockNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason);
+  [[nodiscard]] base::Status
+  FailNavigation(base::TabId tab_id, base::RequestId request_id, std::string reason);
 
 private:
   [[nodiscard]] std::vector<TabState>::iterator FindTab(base::TabId tab_id);

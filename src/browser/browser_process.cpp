@@ -161,17 +161,14 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
 {
   if (response.request_id != request.request_id)
   {
-    (void)tabs_.FailNavigation(request.tab_id,
-                               request.request_id,
-                               "navigation response request id mismatch");
+    (void)tabs_.FailNavigation(
+        request.tab_id, request.request_id, "navigation response request id mismatch");
     return base::Status::Error("navigation response request id mismatch");
   }
 
   if (!ipc::navigation::IsValidNavigateResponse(response))
   {
-    (void)tabs_.FailNavigation(request.tab_id,
-                               request.request_id,
-                               "invalid navigation response");
+    (void)tabs_.FailNavigation(request.tab_id, request.request_id, "invalid navigation response");
     return base::Status::Error("invalid navigation response");
   }
 
@@ -194,10 +191,8 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
       return status;
     }
 
-    status = tabs_.CommitNavigation(request.tab_id,
-                                    request.request_id,
-                                    document_id,
-                                    std::string(request.url));
+    status = tabs_.CommitNavigation(
+        request.tab_id, request.request_id, document_id, std::string(request.url));
     if (!status.ok())
     {
       return status;
@@ -207,10 +202,9 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
   }
   case ipc::navigation::NavigateStatus::kBlocked:
   {
-    const std::string reason = response.aegis_reason.empty() ? "navigation blocked"
-                                                             : response.aegis_reason;
-    const base::Status status =
-        tabs_.BlockNavigation(request.tab_id, request.request_id, reason);
+    const std::string reason =
+        response.aegis_reason.empty() ? "navigation blocked" : response.aegis_reason;
+    const base::Status status = tabs_.BlockNavigation(request.tab_id, request.request_id, reason);
     if (!status.ok())
     {
       return status;
@@ -220,10 +214,9 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
   }
   case ipc::navigation::NavigateStatus::kFailed:
   {
-    const std::string reason = response.error_message.empty() ? "navigation failed"
-                                                              : response.error_message;
-    const base::Status status =
-        tabs_.FailNavigation(request.tab_id, request.request_id, reason);
+    const std::string reason =
+        response.error_message.empty() ? "navigation failed" : response.error_message;
+    const base::Status status = tabs_.FailNavigation(request.tab_id, request.request_id, reason);
     if (!status.ok())
     {
       return status;
