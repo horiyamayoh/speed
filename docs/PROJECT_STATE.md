@@ -215,11 +215,13 @@ Completed post-skeleton progress:
 15. Renderer Process IPC server added for `CommitDocument` / `CommitErrorPage`, with schema-first
     `RenderReady` responses carrying render status, content height, and IPC-owned display command
     data.
+16. Browser-side child process host foundation added with move-only child ownership, supervised
+    exit/crash state conversion, tab association for renderer hosts, and explicit shutdown
+    termination behavior.
 
 Recommended next milestone sequence:
 
-1. Add supervision and flag-gated real-process app wiring while preserving the existing
-   schema-first contracts.
+1. Add flag-gated real-process app wiring while preserving the existing schema-first contracts.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

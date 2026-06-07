@@ -152,6 +152,8 @@ add_library(speed_browser
   browser/browser_process.h
   browser/navigation/navigation_controller.cpp
   browser/navigation/navigation_controller.h
+  browser/process_host/child_process_host.cpp
+  browser/process_host/child_process_host.h
   browser/tabs/tab_model.cpp
   browser/tabs/tab_model.h
 )

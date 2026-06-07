@@ -16,6 +16,9 @@ target_link_libraries(speed_navigation_controller_test PRIVATE speed_browser)
 speed_add_test(speed_browser_process_test unit/browser_process_test.cpp)
 target_link_libraries(speed_browser_process_test PRIVATE speed_browser)
 
+speed_add_test(speed_child_process_host_test unit/child_process_host_test.cpp)
+target_link_libraries(speed_child_process_host_test PRIVATE speed_browser)
+
 speed_add_test(speed_renderer_process_test unit/renderer_process_test.cpp)
 target_link_libraries(speed_renderer_process_test PRIVATE speed_renderer)
 
