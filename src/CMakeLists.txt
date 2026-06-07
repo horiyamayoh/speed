@@ -113,6 +113,8 @@ target_include_directories(speed_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 speed_configure_target(speed_ui)
 
 add_library(speed_ui_gui
+  ui/gui/address_bar_model.cpp
+  ui/gui/address_bar_model.h
   ui/gui/browser_gui_shell.cpp
   ui/gui/browser_gui_shell.h
   ui/gui/display_list_renderer.cpp

@@ -224,10 +224,13 @@ Completed post-skeleton progress:
 18. Renderer child crash recovery added for the opt-in multi-process path: dead renderer hosts are
     converted into tab crashed state, the Browser Process remains running, and the app snapshot
     exposes a local crash page without asking the dead renderer to render it.
+19. GUI URL entry polish added within MVP scope: deterministic address bar caret/selection model,
+    selection replacement, backspace behavior, caret drawing, and history panel click-to-navigate
+    coverage.
 
 Recommended next milestone sequence:
 
-1. Polish GUI URL entry/status behavior and continue hardening the opt-in real-process path.
+1. Continue process/docs/test hardening for the opt-in real-process path.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten

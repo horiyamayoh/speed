@@ -43,6 +43,12 @@ target_link_libraries(speed_display_list_test PRIVATE speed_engine)
 speed_add_test(speed_display_list_renderer_test ui/display_list_renderer_test.cpp)
 target_link_libraries(speed_display_list_renderer_test PRIVATE speed_ui_gui)
 
+speed_add_test(speed_address_bar_model_test ui/address_bar_model_test.cpp)
+target_link_libraries(speed_address_bar_model_test PRIVATE speed_ui_gui)
+
+speed_add_test(speed_browser_gui_shell_interaction_test ui/browser_gui_shell_interaction_test.cpp)
+target_link_libraries(speed_browser_gui_shell_interaction_test PRIVATE speed_ui_gui)
+
 speed_add_test(speed_aegis_classifier_test aegis/request_classifier_test.cpp)
 target_link_libraries(speed_aegis_classifier_test PRIVATE speed_aegis)
 

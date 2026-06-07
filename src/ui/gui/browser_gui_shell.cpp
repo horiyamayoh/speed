@@ -371,12 +371,12 @@ void BrowserGuiShell::ProcessMouseDown(int x, int y)
   if (Contains(layout.address_rect, x, y))
   {
     address_focused_ = true;
-    address_all_selected_ = true;
+    address_bar_.SelectAll();
     return;
   }
 
   address_focused_ = false;
-  address_all_selected_ = false;
+  address_bar_.ClearSelection();
 
   if (Contains(layout.go_rect, x, y))
   {
@@ -396,7 +396,7 @@ void BrowserGuiShell::ProcessMouseDown(int x, int y)
     const int row = (y - layout.history_panel_rect.y - 30) / kHistoryRowHeight;
     if (row >= 0 && static_cast<std::size_t>(row) < snapshot.history.size())
     {
-      address_text_ = snapshot.history[static_cast<std::size_t>(row)];
+      address_bar_.SetText(snapshot.history[static_cast<std::size_t>(row)]);
       NavigateAddressBar();
     }
   }
@@ -415,21 +415,11 @@ void BrowserGuiShell::ProcessKeyPress(platform::window::Key key)
     NavigateAddressBar();
     return;
   case platform::window::Key::kBackspace:
-    if (address_all_selected_)
-    {
-      address_text_.clear();
-      address_all_selected_ = false;
-      return;
-    }
-
-    if (!address_text_.empty())
-    {
-      address_text_.pop_back();
-    }
+    address_bar_.Backspace();
     return;
   case platform::window::Key::kEscape:
     address_focused_ = false;
-    address_all_selected_ = false;
+    address_bar_.ClearSelection();
     SyncAddressBarFromActiveTab();
     return;
   case platform::window::Key::kTab:
@@ -447,25 +437,20 @@ void BrowserGuiShell::ProcessTextInput(char text)
 
   if (text >= 32 && text <= 126)
   {
-    if (address_all_selected_)
-    {
-      address_text_.clear();
-      address_all_selected_ = false;
-    }
-    address_text_.push_back(text);
+    address_bar_.InsertChar(text);
   }
 }
 
 void BrowserGuiShell::NavigateAddressBar()
 {
-  if (address_text_.empty())
+  if (address_bar_.text().empty())
   {
     status_text_ = "enter a URL";
     return;
   }
 
-  const base::Status status = delegate_.NavigateActiveTab(address_text_);
-  status_text_ = status.ok() ? "loaded " + address_text_ : status.message();
+  const base::Status status = delegate_.NavigateActiveTab(address_bar_.text());
+  status_text_ = status.ok() ? "loaded " + address_bar_.text() : status.message();
   SyncAddressBarFromActiveTab();
   page_scroll_y_ = 0;
   ClampScroll();
@@ -531,14 +516,16 @@ void BrowserGuiShell::DrawChrome(Canvas& canvas,
 
   canvas.FillRect(layout.address_rect, kPageBackground);
   canvas.StrokeRect(layout.address_rect, address_focused_ ? kAccent : kBorder, 1);
-  const std::string address =
-      Truncate(address_text_, static_cast<std::size_t>(std::max(8, layout.address_rect.width / 8)));
-  if (address_focused_ && address_all_selected_ && !address.empty())
+  const std::string address = Truncate(
+      address_bar_.text(), static_cast<std::size_t>(std::max(8, layout.address_rect.width / 8)));
+  if (address_focused_ && address_bar_.has_selection() && !address.empty())
   {
+    const std::size_t selected_count =
+        std::min(address.size(), address_bar_.selection_end() - address_bar_.selection_start());
     const Rect selection_rect{
-        .x = layout.address_rect.x + 4,
+        .x = layout.address_rect.x + 8 + static_cast<int>(address_bar_.selection_start()) * 8,
         .y = layout.address_rect.y + 4,
-        .width = std::min(layout.address_rect.width - 8, static_cast<int>(address.size()) * 8 + 8),
+        .width = std::min(layout.address_rect.width - 8, static_cast<int>(selected_count) * 8 + 4),
         .height = layout.address_rect.height - 8,
     };
     canvas.FillRect(selection_rect, kAccent);
@@ -548,6 +535,17 @@ void BrowserGuiShell::DrawChrome(Canvas& canvas,
   else
   {
     canvas.DrawText(address, layout.address_rect.x + 8, layout.address_rect.y + 5, 14, kText);
+    if (address_focused_)
+    {
+      const int caret_x = layout.address_rect.x + 8 +
+                          (static_cast<int>(std::min(address_bar_.caret(), address.size())) * 8);
+      canvas.DrawLine(caret_x,
+                      layout.address_rect.y + 5,
+                      caret_x,
+                      layout.address_rect.y + layout.address_rect.height - 5,
+                      kAccent,
+                      1);
+    }
   }
   DrawButton(canvas, layout.go_rect, "Go");
   DrawButton(canvas, layout.history_rect, "Hist", history_visible_);
@@ -621,8 +619,7 @@ void BrowserGuiShell::DrawPage(Canvas& canvas,
 void BrowserGuiShell::SyncAddressBarFromActiveTab()
 {
   const BrowserShellSnapshot snapshot = delegate_.Snapshot();
-  address_text_ = ActiveAddressText(snapshot);
-  address_all_selected_ = false;
+  address_bar_.SetText(ActiveAddressText(snapshot));
 }
 
 void BrowserGuiShell::ClampScroll()

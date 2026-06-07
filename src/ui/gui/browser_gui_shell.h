@@ -1,6 +1,7 @@
 #pragma once
 
 #include "platform/window/window.h"
+#include "ui/gui/address_bar_model.h"
 #include "ui/gui/display_list_renderer.h"
 #include "ui/shell/browser_shell.h"
 
@@ -71,10 +72,9 @@ private:
   std::unique_ptr<platform::window::PlatformWindow> window_;
   DisplayListRenderer display_list_renderer_;
   BrowserGuiShellOptions options_;
-  std::string address_text_;
+  AddressBarModel address_bar_;
   std::string status_text_;
   bool address_focused_{false};
-  bool address_all_selected_{false};
   bool history_visible_{false};
   int page_scroll_y_{0};
 };
