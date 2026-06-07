@@ -204,11 +204,14 @@ Completed post-skeleton progress:
 11. Minimal GUI BrowserShell added as `speed-browser-gui` with X11/Cairo platform windowing, URL
     entry, tab create/switch/close, active page display-list painting, Aegis/error page display,
     history panel, and GUI/app smoke coverage.
+12. POSIX child process launch foundation added under `platform/process` with move-only child
+    ownership, timed waits, termination, and executable smoke coverage for Browser, Renderer,
+    Network, and Utility entrypoints.
 
 Recommended next milestone sequence:
 
-1. Replace in-process app wiring with real process launch, IPC transport, supervision, and recovery
-   while preserving the existing schema-first contracts.
+1. Add framed IPC transport, process IPC servers, supervision, and flag-gated real-process app
+   wiring while preserving the existing schema-first contracts.
 2. Add CI once local build and test flow stabilizes.
 
 ## 13. Recovery procedure when context is forgotten
