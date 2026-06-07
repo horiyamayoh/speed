@@ -13,6 +13,7 @@ public:
   RendererIpcServer(RendererProcess& process, ipc::FileDescriptorTransport transport);
 
   [[nodiscard]] base::Status RunOnce();
+  [[nodiscard]] base::Status RunForCommitCount(int commit_count);
   [[nodiscard]] base::Status RunUntilClosed();
 
 private:

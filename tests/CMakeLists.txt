@@ -76,3 +76,8 @@ speed_add_test(speed_multiprocess_navigation_test integration/multiprocess_navig
 target_link_libraries(speed_multiprocess_navigation_test PRIVATE speed_app_core)
 add_dependencies(speed_multiprocess_navigation_test speed-network speed-renderer)
 target_compile_definitions(speed_multiprocess_navigation_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")
+
+speed_add_test(speed_renderer_crash_recovery_test integration/renderer_crash_recovery_test.cpp)
+target_link_libraries(speed_renderer_crash_recovery_test PRIVATE speed_app_core)
+add_dependencies(speed_renderer_crash_recovery_test speed-network speed-renderer)
+target_compile_definitions(speed_renderer_crash_recovery_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")

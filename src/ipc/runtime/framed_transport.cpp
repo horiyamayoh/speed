@@ -45,7 +45,7 @@ void EncodeFrameSize(std::uint32_t size, char output[4])
 {
   while (!bytes.empty())
   {
-    const ssize_t written = ::write(file_descriptor, bytes.data(), bytes.size());
+    const ssize_t written = ::send(file_descriptor, bytes.data(), bytes.size(), MSG_NOSIGNAL);
     if (written < 0)
     {
       if (errno == EINTR)

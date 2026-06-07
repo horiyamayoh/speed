@@ -138,20 +138,22 @@ std::vector<CommittedDocument> RendererProcess::committed_documents() const
   return committed_documents_;
 }
 
-int RunRendererProcess(int ipc_fd)
+int RunRendererProcess(int ipc_fd, int crash_after_commit_count)
 {
   if (ipc_fd >= 0)
   {
     RendererProcess process;
     RendererIpcServer server(process, ipc::FileDescriptorTransport(ipc_fd));
-    const base::Status status = server.RunUntilClosed();
+    const base::Status status = crash_after_commit_count > 0
+                                    ? server.RunForCommitCount(crash_after_commit_count)
+                                    : server.RunUntilClosed();
     if (!status.ok())
     {
       base::Log(base::LogLevel::kError, "renderer", status.message());
       return 1;
     }
 
-    return 0;
+    return crash_after_commit_count > 0 ? 70 : 0;
   }
 
   RendererProcess process;

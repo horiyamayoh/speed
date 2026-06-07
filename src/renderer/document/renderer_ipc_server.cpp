@@ -147,6 +147,20 @@ base::Status RendererIpcServer::RunOnce()
   return transport_.SendMessage(ipc::navigation::EncodeRenderReady(ready));
 }
 
+base::Status RendererIpcServer::RunForCommitCount(int commit_count)
+{
+  for (int index = 0; index < commit_count; ++index)
+  {
+    const base::Status status = RunOnce();
+    if (!status.ok())
+    {
+      return status;
+    }
+  }
+
+  return base::Status::Ok();
+}
+
 base::Status RendererIpcServer::RunUntilClosed()
 {
   for (;;)

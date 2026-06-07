@@ -5,6 +5,7 @@
 #include "browser/browser_process.h"
 #include "browser/process_host/child_process_host.h"
 #include "browser/tabs/tab_model.h"
+#include "engine/render_pipeline.h"
 #include "ipc/runtime/framed_transport.h"
 #include "ipc/runtime/navigation_codec.h"
 #include "network/network_process.h"
@@ -104,7 +105,46 @@ public:
 
   [[nodiscard]] virtual std::vector<AppCommittedDocument> committed_documents() const = 0;
   virtual void CloseTab(base::TabId tab_id) = 0;
+  virtual void RecordCrashPage(base::TabId tab_id,
+                               base::DocumentId document_id,
+                               std::string url,
+                               std::string reason) = 0;
 };
+
+struct RendererCrash final
+{
+  base::TabId tab_id;
+  std::string reason;
+};
+
+class RendererCrashSource
+{
+public:
+  virtual ~RendererCrashSource() = default;
+
+  [[nodiscard]] virtual std::vector<RendererCrash> TakeRendererCrashes() = 0;
+};
+
+[[nodiscard]] static AppCommittedDocument BuildLocalCrashDocument(base::TabId tab_id,
+                                                                  base::DocumentId document_id,
+                                                                  std::string url,
+                                                                  std::string reason)
+{
+  const std::string body =
+      "<html><body><h1>Tab crashed</h1><p>" + reason + "</p><p>" + url + "</p></body></html>";
+  const engine::RenderPipeline pipeline;
+  const engine::RenderResult render_result =
+      pipeline.RenderHtml(body, {.width = 800, .height = 600});
+  return {
+      .tab_id = tab_id,
+      .document_id = document_id ? document_id : base::DocumentId::FromRaw(1),
+      .url = std::move(url),
+      .document_body = body,
+      .is_error_page = true,
+      .display_list = render_result.display_list,
+      .content_height = render_result.layout.content_height,
+  };
+}
 
 [[nodiscard]] static engine::paint::DisplayCommandType
 MapDisplayCommandType(ipc::navigation::RenderCommandType type)
@@ -324,11 +364,19 @@ public:
 
   void CloseTab(base::TabId /*tab_id*/) override {}
 
+  void RecordCrashPage(base::TabId /*tab_id*/,
+                       base::DocumentId /*document_id*/,
+                       std::string /*url*/,
+                       std::string /*reason*/) override
+  {}
+
 private:
   renderer::RendererProcess& process_;
 };
 
-class IpcRendererClient final : public browser::NavigationRendererClient, public PageSnapshotSource
+class IpcRendererClient final : public browser::NavigationRendererClient,
+                                public PageSnapshotSource,
+                                public RendererCrashSource
 {
 public:
   explicit IpcRendererClient(std::filesystem::path app_binary_dir)
@@ -350,12 +398,15 @@ public:
         SendCommitMessage(commit.tab_id, ipc::navigation::EncodeCommitDocument(commit), ready);
     if (!status.ok())
     {
+      RecordCrashDocumentIfNeeded(commit.tab_id, commit.document_id, commit.url, status);
       return status;
     }
 
     if (!ready.ok)
     {
-      return base::Status::Error(ready.error_message);
+      status = base::Status::Error(ready.error_message);
+      RecordCrashDocumentIfNeeded(commit.tab_id, commit.document_id, commit.url, status);
+      return status;
     }
 
     committed_documents_.push_back({
@@ -377,12 +428,15 @@ public:
         SendCommitMessage(commit.tab_id, ipc::navigation::EncodeCommitErrorPage(commit), ready);
     if (!status.ok())
     {
+      RecordCrashDocumentIfNeeded(commit.tab_id, commit.document_id, commit.url, status);
       return status;
     }
 
     if (!ready.ok)
     {
-      return base::Status::Error(ready.error_message);
+      status = base::Status::Error(ready.error_message);
+      RecordCrashDocumentIfNeeded(commit.tab_id, commit.document_id, commit.url, status);
+      return status;
     }
 
     committed_documents_.push_back({
@@ -416,12 +470,46 @@ public:
                   { return document.tab_id == tab_id; });
   }
 
+  void RecordCrashPage(base::TabId tab_id,
+                       base::DocumentId document_id,
+                       std::string url,
+                       std::string reason) override
+  {
+    committed_documents_.push_back(
+        BuildLocalCrashDocument(tab_id, document_id, std::move(url), std::move(reason)));
+  }
+
+  std::vector<RendererCrash> TakeRendererCrashes() override
+  {
+    std::vector<RendererCrash> crashes;
+    for (RendererConnection& connection : renderers_)
+    {
+      if (connection.reported_crash)
+      {
+        continue;
+      }
+
+      (void)connection.host.PollForExit();
+      if (connection.host.state() == browser::ChildProcessState::kCrashed)
+      {
+        connection.reported_crash = true;
+        crashes.push_back({
+            .tab_id = connection.tab_id,
+            .reason = "renderer process crashed: " + connection.host.CrashReason(),
+        });
+      }
+    }
+
+    return crashes;
+  }
+
 private:
   struct RendererConnection final
   {
     base::TabId tab_id;
     browser::ChildProcessHost host;
     ipc::FileDescriptorTransport transport;
+    bool reported_crash{false};
   };
 
   [[nodiscard]] base::Status SendCommitMessage(base::TabId tab_id,
@@ -442,12 +530,19 @@ private:
 
     if (connection->host.state() == browser::ChildProcessState::kCrashed)
     {
-      return base::Status::Error(connection->host.CrashReason());
+      connection->reported_crash = true;
+      return base::Status::Error("renderer process crashed: " + connection->host.CrashReason());
     }
 
     status = connection->transport.SendMessage(message);
     if (!status.ok())
     {
+      (void)connection->host.PollForExit();
+      if (connection->host.state() == browser::ChildProcessState::kCrashed)
+      {
+        connection->reported_crash = true;
+        return base::Status::Error("renderer process crashed: " + connection->host.CrashReason());
+      }
       return status;
     }
 
@@ -455,6 +550,12 @@ private:
     status = connection->transport.ReceiveMessage(response_message);
     if (!status.ok())
     {
+      (void)connection->host.PollForExit();
+      if (connection->host.state() == browser::ChildProcessState::kCrashed)
+      {
+        connection->reported_crash = true;
+        return base::Status::Error("renderer process crashed: " + connection->host.CrashReason());
+      }
       return status;
     }
 
@@ -476,10 +577,19 @@ private:
       return nullptr;
     }
 
+    std::vector<std::string> arguments = {"--ipc-fd=" +
+                                          std::to_string(pair.second.file_descriptor())};
+    if (const char* const crash_after_count =
+            std::getenv("SPEED_RENDERER_CRASH_AFTER_COMMIT_COUNT");
+        crash_after_count != nullptr && crash_after_count[0] != '\0')
+    {
+      arguments.push_back("--crash-after-commit-count=" + std::string(crash_after_count));
+    }
+
     browser::ChildProcessHost host({
         .role = browser::ChildProcessRole::kRenderer,
         .executable_path = app_binary_dir_ / "speed-renderer",
-        .arguments = {"--ipc-fd=" + std::to_string(pair.second.file_descriptor())},
+        .arguments = std::move(arguments),
         .tab_id = tab_id,
     });
     status = host.Launch();
@@ -493,8 +603,22 @@ private:
         .tab_id = tab_id,
         .host = std::move(host),
         .transport = std::move(pair.first),
+        .reported_crash = false,
     });
     return &renderers_.back();
+  }
+
+  void RecordCrashDocumentIfNeeded(base::TabId tab_id,
+                                   base::DocumentId document_id,
+                                   const std::string& url,
+                                   const base::Status& status)
+  {
+    if (status.ok() || status.message().find("renderer process crashed") == std::string::npos)
+    {
+      return;
+    }
+
+    RecordCrashPage(tab_id, document_id, url, status.message());
   }
 
   std::filesystem::path app_binary_dir_;
@@ -595,8 +719,10 @@ public:
     return browser_process_->NavigateActiveTab(input);
   }
 
-  [[nodiscard]] ui::BrowserShellSnapshot Snapshot() const
+  [[nodiscard]] ui::BrowserShellSnapshot Snapshot()
   {
+    PollRendererCrashes();
+
     ui::BrowserShellSnapshot snapshot{
         .active_tab = browser_process_->tabs().active_tab(),
         .tabs = {},
@@ -654,6 +780,7 @@ private:
         std::make_unique<IpcNetworkClient>(app_binary_dir, initialization_status_);
     auto renderer_client = std::make_unique<IpcRendererClient>(app_binary_dir);
     page_source_ = renderer_client.get();
+    crash_source_ = renderer_client.get();
     network_client_ = std::move(network_client);
     renderer_client_ = std::move(renderer_client);
     browser_process_ = std::make_unique<browser::BrowserProcess>(
@@ -729,12 +856,40 @@ private:
     }
   }
 
+  void PollRendererCrashes()
+  {
+    if (crash_source_ == nullptr || browser_process_ == nullptr || !browser_process_->running())
+    {
+      return;
+    }
+
+    for (const RendererCrash& crash : crash_source_->TakeRendererCrashes())
+    {
+      const browser::TabState* const tab = browser_process_->tabs().GetTabState(crash.tab_id);
+      if (tab == nullptr || tab->navigation_state == browser::TabNavigationState::kCrashed)
+      {
+        continue;
+      }
+
+      if (page_source_ != nullptr)
+      {
+        const std::string url = tab->current_url.empty() ? tab->pending_url : tab->current_url;
+        const base::DocumentId document_id =
+            tab->current_document_id ? tab->current_document_id : base::DocumentId::FromRaw(1);
+        page_source_->RecordCrashPage(crash.tab_id, document_id, url, crash.reason);
+      }
+
+      (void)browser_process_->HandleRendererCrash(crash.tab_id, crash.reason);
+    }
+  }
+
   base::Status initialization_status_;
   std::unique_ptr<network::NetworkProcess> network_process_;
   std::unique_ptr<renderer::RendererProcess> renderer_process_;
   std::unique_ptr<browser::NavigationNetworkClient> network_client_;
   std::unique_ptr<browser::NavigationRendererClient> renderer_client_;
   PageSnapshotSource* page_source_{nullptr};
+  RendererCrashSource* crash_source_{nullptr};
   std::unique_ptr<browser::BrowserProcess> browser_process_;
   std::vector<base::TabId> known_tabs_;
 };

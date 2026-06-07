@@ -15,6 +15,12 @@ namespace
 
 constexpr std::string_view kInitialUrl = "about:blank";
 
+[[nodiscard]] bool IsRendererCrashStatus(const base::Status& status)
+{
+  return status.message().find("renderer process crashed") != std::string::npos ||
+         status.message().find("child process exited") != std::string::npos;
+}
+
 } // namespace
 
 BrowserProcess::BrowserProcess(NavigationNetworkClient& network_client,
@@ -220,6 +226,12 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
     base::Status status = renderer_client_.SendCommitDocument(commit);
     if (!status.ok())
     {
+      if (IsRendererCrashStatus(status))
+      {
+        (void)tabs_.MarkCrashed(request.tab_id, status.message());
+        return status;
+      }
+
       (void)tabs_.FailNavigation(request.tab_id, request.request_id, status.message());
       return status;
     }
@@ -252,6 +264,12 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
         request.tab_id, request.url, ipc::navigation::ErrorPageReason::kBlocked, reason);
     if (!error_page_status.ok())
     {
+      if (IsRendererCrashStatus(error_page_status))
+      {
+        (void)tabs_.MarkCrashed(request.tab_id, error_page_status.message());
+        return error_page_status;
+      }
+
       (void)tabs_.FailNavigation(request.tab_id, request.request_id, error_page_status.message());
       return error_page_status;
     }
@@ -272,6 +290,12 @@ BrowserProcess::HandleNavigateResponse(const NavigationRequest& request,
         request.tab_id, request.url, ipc::navigation::ErrorPageReason::kFailed, reason);
     if (!error_page_status.ok())
     {
+      if (IsRendererCrashStatus(error_page_status))
+      {
+        (void)tabs_.MarkCrashed(request.tab_id, error_page_status.message());
+        return error_page_status;
+      }
+
       (void)tabs_.FailNavigation(request.tab_id, request.request_id, error_page_status.message());
       return error_page_status;
     }
