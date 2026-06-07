@@ -210,10 +210,12 @@ Completed post-skeleton progress:
 13. Framed binary IPC transport foundation added under `ipc/runtime` with schema-owned navigation
     message codecs, local socketpair transport, round-trip coverage, and malformed frame/payload
     rejection tests.
+14. Network Process IPC server added for `NavigateRequest` / `NavigateResponse`, reusing the
+    existing NetworkService path so Aegis classification still happens before external dispatch.
 
 Recommended next milestone sequence:
 
-1. Add process IPC servers, supervision, and flag-gated real-process app wiring while preserving the
+1. Add Renderer IPC server, supervision, and flag-gated real-process app wiring while preserving the
    existing schema-first contracts.
 2. Add CI once local build and test flow stabilizes.
 

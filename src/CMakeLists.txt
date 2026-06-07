@@ -126,6 +126,8 @@ add_library(speed_network
   network/fetch/fetch_adapter.h
   network/fetch/network_service.cpp
   network/fetch/network_service.h
+  network/network_ipc_server.cpp
+  network/network_ipc_server.h
   network/network_process.cpp
   network/network_process.h
 )

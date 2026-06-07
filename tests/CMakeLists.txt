@@ -53,6 +53,9 @@ target_link_libraries(speed_ipc_framed_transport_test PRIVATE speed_ipc)
 speed_add_test(speed_network_aegis_hook_test integration/network_aegis_hook_test.cpp)
 target_link_libraries(speed_network_aegis_hook_test PRIVATE speed_network)
 
+speed_add_test(speed_network_ipc_server_test integration/network_ipc_server_test.cpp)
+target_link_libraries(speed_network_ipc_server_test PRIVATE speed_network)
+
 speed_add_test(speed_process_launcher_test integration/process_launcher_test.cpp)
 target_link_libraries(speed_process_launcher_test PRIVATE speed_platform)
 target_compile_definitions(speed_process_launcher_test PRIVATE SPEED_APP_DIR="${PROJECT_BINARY_DIR}/src/app")

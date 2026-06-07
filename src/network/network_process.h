@@ -18,6 +18,6 @@ private:
   NetworkService service_;
 };
 
-int RunNetworkProcess();
+int RunNetworkProcess(int ipc_fd = -1);
 
 } // namespace speed::network
